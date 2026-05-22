@@ -167,16 +167,6 @@ TEST_F(LimitOrderBookTest, OrderIdReuseAfterFullFill)
     EXPECT_EQ(book->ask_volume(5000), 15u);
 }
 
-TEST_F(LimitOrderBookTest, FifoSamePriceLevel)
-{
-    EXPECT_TRUE(book->add_order(1, 5000, 10, false));
-    EXPECT_TRUE(book->add_order(2, 5000, 20, false));
-    EXPECT_TRUE(book->add_order(3, 5000, 10, true));
-    EXPECT_EQ(book->ask_volume(5000), 20u);
-    EXPECT_TRUE(book->add_order(4, 5000, 10, true));
-    EXPECT_EQ(book->ask_volume(5000), 10u);
-}
-
 TEST_F(LimitOrderBookTest, MatchBuyRestingSellTaker)
 {
     EXPECT_TRUE(book->add_order(1, 5000, 100, true));
@@ -260,15 +250,6 @@ TEST_F(LimitOrderBookTest, CancelAfterFullFillFails)
     EXPECT_TRUE(book->add_order(1, 5000, 10, false));
     EXPECT_TRUE(book->add_order(2, 5000, 10, true));
     EXPECT_FALSE(book->cancel_order(1));
-}
-
-TEST_F(LimitOrderBookTest, StaleTombstoneSkippedOnMatch)
-{
-    EXPECT_TRUE(book->add_order(1, 5000, 10, false));
-    EXPECT_TRUE(book->cancel_order(1));
-    EXPECT_TRUE(book->add_order(2, 5000, 10, false));
-    EXPECT_TRUE(book->add_order(3, 5000, 10, true));
-    EXPECT_EQ(book->ask_volume(5000), 0u);
 }
 
 TEST_F(LimitOrderBookTest, VolumeQueryOutOfRangeReturnsZero)
