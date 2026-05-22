@@ -187,12 +187,12 @@ TEST_F(LimitOrderBookTest, MatchBuyRestingSellTaker)
 
 TEST_F(LimitOrderBookTest, NoCrossWhenPricesDoNotOverlap)
 {
-    EXPECT_TRUE(book->add_order(1, 5010, 10, true));
-    EXPECT_TRUE(book->add_order(2, 5000, 10, false));
-    EXPECT_EQ(book->best_bid_tick(), 5010u);
-    EXPECT_EQ(book->best_ask_tick(), 5000u);
-    EXPECT_EQ(book->bid_volume(5010), 10u);
-    EXPECT_EQ(book->ask_volume(5000), 10u);
+    EXPECT_TRUE(book->add_order(1, 5000, 10, true));
+    EXPECT_TRUE(book->add_order(2, 5010, 10, false));
+    EXPECT_EQ(book->best_bid_tick(), 5000u);
+    EXPECT_EQ(book->best_ask_tick(), 5010u);
+    EXPECT_EQ(book->bid_volume(5000), 10u);
+    EXPECT_EQ(book->ask_volume(5010), 10u);
 }
 
 TEST_F(LimitOrderBookTest, AggressiveBuyCrossesRestingAsk)
@@ -297,12 +297,12 @@ TEST(LimitOrderBookCapacityTest, LevelQueueFullOnRest)
 {
     const BookConfig cfg = test::tiny_config();
     LimitOrderBook book(cfg);
-    EXPECT_TRUE(book.add_order(1, 5000, 1, true));
-    EXPECT_TRUE(book.add_order(2, 5000, 1, true));
-    EXPECT_TRUE(book.add_order(3, 5000, 1, true));
-    EXPECT_TRUE(book.add_order(4, 5000, 1, true));
-    EXPECT_FALSE(book.add_order(5, 5000, 1, true));
-    EXPECT_EQ(book.bid_volume(5000), 4u);
+    EXPECT_TRUE(book.add_order(1, 100, 1, true));
+    EXPECT_TRUE(book.add_order(2, 100, 1, true));
+    EXPECT_TRUE(book.add_order(3, 100, 1, true));
+    EXPECT_TRUE(book.add_order(4, 100, 1, true));
+    EXPECT_FALSE(book.add_order(5, 100, 1, true));
+    EXPECT_EQ(book.bid_volume(100), 4u);
 }
 
 TEST(LimitOrderBookCapacityTest, PartialMatchRestFailsWhenPoolFull)
