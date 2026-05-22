@@ -7,7 +7,7 @@ using namespace raijin;
 // Large capacity to ensure we are measuring raw matching speed, not pool/queue limits.
 static BookConfig bench_config{
     .order_pool_capacity = 2000000,
-    .price_level_count = 10000,
+    .price_level_count = 100,
     .level_queue_capacity = 1048576, 
     .max_order_id = 4000000
 };
