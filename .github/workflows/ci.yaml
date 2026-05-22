@@ -28,7 +28,7 @@ on:
       - '**.hpp'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-and-test:
@@ -92,24 +92,11 @@ jobs:
           cmake .. -DCMAKE_BUILD_TYPE=Release
           make -j$(nproc) raijin_benchmarks
 
-      - name: Run Benchmarks and Auto-Update Markdown
+      - name: Run Benchmarks and Report to Summary
         run: |
           cd build
-          echo "# Raijin-LOB Performance Benchmarks" > ../BENCHMARKS.md
-          echo '```text' >> ../BENCHMARKS.md
-          ./raijin_benchmarks >> ../BENCHMARKS.md
-          echo '```' >> ../BENCHMARKS.md
-          cd ..
-
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add BENCHMARKS.md
-          
-          if ! git diff --cached --quiet; then
-            git commit -m "docs: auto-update BENCHMARKS.md [skip ci]"
-            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-              git push
-            else
-              echo "Benchmark updated locally; skipping push for PR check."
-            fi
-          fi
+          echo "## Raijin-LOB Performance Benchmarks" >> $GITHUB_STEP_SUMMARY
+          echo "### Microbench (Deterministic Data)" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          ./raijin_benchmarks >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
