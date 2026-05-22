@@ -2,6 +2,7 @@
 #include "../include/core/limit_order_book.hpp"
 #include "../include/core/ring_buffer.hpp"
 #include <chrono>
+#include <memory>
 
 using namespace raijin;
 
@@ -113,14 +114,14 @@ BENCHMARK(BM_Compare_Arka_MatchWithReceipts)->UseManualTime();
 
 static void BM_Compare_NanoMatch_MixedAdd(benchmark::State &state)
 {
-    LimitOrderBook book(kBenchConfig);
+    std::unique_ptr<LimitOrderBook> book = std::make_unique<LimitOrderBook>(kBenchConfig);
     std::uint64_t id = 1;
     for (auto _ : state)
     {
         if (id > kBenchConfig.max_order_id)
         {
             state.PauseTiming();
-            book = LimitOrderBook(kBenchConfig);
+            book = std::make_unique<LimitOrderBook>(kBenchConfig);
             id = 1;
             state.ResumeTiming();
         }
@@ -128,7 +129,7 @@ static void BM_Compare_NanoMatch_MixedAdd(benchmark::State &state)
         const std::uint32_t tick = kTick + static_cast<std::uint32_t>(id % 200);
         const std::uint32_t vol = static_cast<std::uint32_t>((id % 500) + 1);
         const auto t0 = std::chrono::steady_clock::now();
-        bool ok = book.add_order(id, tick, vol, is_buy);
+        bool ok = book->add_order(id, tick, vol, is_buy);
         const auto t1 = std::chrono::steady_clock::now();
         benchmark::DoNotOptimize(ok);
         state.SetIterationTime(elapsed_seconds(t0, t1));
