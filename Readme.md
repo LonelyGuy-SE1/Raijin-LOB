@@ -12,69 +12,16 @@ Technical documentation: [docs site](https://lonelyguy-se1.github.io/Raijin-LOB/
 
 Phase 1 Benchmark Results. 
 
-benchmarks:
-  - name: BM_BestBidAsk
-    time_ns: 3.16
-    cpu_ns: 3.16
-    iterations: 219705540
-    throughput_mps: 632.037
-
-  - name: BM_Compare_Arka_AddNoMatch/manual_time
-    time_ns: 41.8
-    cpu_ns: 111
-    iterations: 16735868
-    throughput_mps: 23.9141
-
-  - name: BM_Compare_Arka_CancelOnly/manual_time
-    time_ns: 61.0
-    cpu_ns: 111
-    iterations: 11448388
-    throughput_mps: 16.3969
-
-  - name: BM_Compare_Arka_MatchOneLevel/manual_time
-    time_ns: 54.6
-    cpu_ns: 104
-    iterations: 12859405
-    throughput_mps: 18.3304
-
-  - name: BM_Compare_Arka_MatchWithReceipts/manual_time
-    time_ns: 57.0
-    cpu_ns: 107
-    iterations: 11338256
-    throughput_mps: 17.5422
-
-  - name: BM_Compare_NanoMatch_MixedAdd/manual_time
-    time_ns: 66.3
-    cpu_ns: 108
-    iterations: 10382139
-    throughput_mps: 15.0765
-
-  - name: BM_MultiLevelSweep/manual_time
-    time_ns: 106
-    cpu_ns: 843
-    iterations: 6590855
-    throughput_mps: 9.42885
-
-  - name: BM_MatchThroughTombstones/0/manual_time
-    time_ns: 40.9
-    cpu_ns: 806
-    iterations: 17095797
-    throughput_mps: 24.4236
-
-  - name: BM_MatchThroughTombstones/8/manual_time
-    time_ns: 62.1
-    cpu_ns: 798
-    iterations: 11282177
-    throughput_mps: 16.0953
-
-  - name: BM_MatchThroughTombstones/64/manual_time
-    time_ns: 152
-    cpu_ns: 888
-    iterations: 4605999
-    throughput_mps: 6.57272
-
-  - name: BM_MatchThroughTombstones/256/manual_time
-    time_ns: 497
-    cpu_ns: 1241
-    iterations: 1426432
-    throughput_mps: 2.01325
+| Benchmark                                    | Time (ns) | CPU (ns) | Iterations | Throughput (M/s) |
+|---------------------------------------------|-----------|-----------|-------------|------------------|
+| BM_BestBidAsk                               | 3.16      | 3.16      | 219705540   | 632.037          |
+| BM_Compare_Arka_AddNoMatch/manual_time      | 41.8      | 111       | 16735868    | 23.9141          |
+| BM_Compare_Arka_CancelOnly/manual_time      | 61.0      | 111       | 11448388    | 16.3969          |
+| BM_Compare_Arka_MatchOneLevel/manual_time   | 54.6      | 104       | 12859405    | 18.3304          |
+| BM_Compare_Arka_MatchWithReceipts/manual_time | 57.0    | 107       | 11338256    | 17.5422          |
+| BM_Compare_NanoMatch_MixedAdd/manual_time   | 66.3      | 108       | 10382139    | 15.0765          |
+| BM_MultiLevelSweep/manual_time              | 106       | 843       | 6590855     | 9.42885          |
+| BM_MatchThroughTombstones/0/manual_time     | 40.9      | 806       | 17095797    | 24.4236          |
+| BM_MatchThroughTombstones/8/manual_time     | 62.1      | 798       | 11282177    | 16.0953          |
+| BM_MatchThroughTombstones/64/manual_time    | 152       | 888       | 4605999     | 6.57272          |
+| BM_MatchThroughTombstones/256/manual_time   | 497       | 1241      | 1426432     | 2.01325          |
