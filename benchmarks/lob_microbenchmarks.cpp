@@ -18,10 +18,10 @@ static void BM_AddOrder(benchmark::State &state)
 {
     LimitOrderBook book(bench_config);
     std::uint64_t order_id = 1;
-
+    uint32_t price = 5000;
     for (auto _ : state)
     {
-        book.add_order(order_id++, 5000, 100, true);
+        book.add_order(order_id++, price++ , 100, true);
         }
 }
 BENCHMARK(BM_AddOrder);
