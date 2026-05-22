@@ -1,0 +1,60 @@
+.site-logo {
+  border-radius: 4px;
+}
+
+.site-header {
+  background: linear-gradient(180deg, #161008 0%, #101010 100%);
+}
+
+.side-bar {
+  border-right: 1px solid #3a2414;
+}
+
+.site-nav .nav-list-link:hover,
+.site-nav .nav-list-link.active {
+  background-image: linear-gradient(
+    -90deg,
+    rgba(232, 148, 10, 0.18) 0%,
+    rgba(196, 74, 18, 0.08) 80%,
+    transparent 100%
+  );
+}
+
+.site-nav .nav-list-link.active {
+  border-left: 3px solid #e8940a;
+}
+
+.site-title {
+  color: #f2dcc8;
+}
+
+.search-input {
+  border-color: #3a2414;
+}
+
+.search-input:focus {
+  border-color: #e8940a;
+  box-shadow: 0 0 0 2px rgba(232, 148, 10, 0.25);
+}
+
+.btn {
+  border-color: #3a2414;
+}
+
+a:not(.nav-list-link):not(.btn) {
+  text-decoration-color: rgba(232, 148, 10, 0.45);
+}
+
+a:not(.nav-list-link):not(.btn):hover {
+  text-decoration-color: #e8940a;
+}
+
+.main-content h1,
+.main-content h2,
+.main-content h3 {
+  border-bottom-color: #3a2414;
+}
+
+blockquote {
+  border-left-color: #c44a12;
+}

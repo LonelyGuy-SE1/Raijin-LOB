@@ -2,9 +2,12 @@ title: Raijin-LOB
 description: Limit order book core — technical reference
 remote_theme: just-the-docs/just-the-docs
 
-color_scheme: dark
+color_scheme: autumn
 search_enabled: true
 heading_anchors: true
+
+logo: "/assets/images/logo.jpg"
+favicon_ico: "/assets/images/favicon.ico"
 
 aux_links:
   Repository: https://github.com/LonelyGuy-SE1/Raijin-LOB

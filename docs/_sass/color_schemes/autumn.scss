@@ -1,0 +1,23 @@
+@import "./color_schemes/dark";
+
+$color-scheme: autumn;
+
+$body-background-color: #0a0a0a;
+$sidebar-color: #101010;
+$search-background-color: #161008;
+$feedback-color: #1a1208;
+$table-background-color: #14100c;
+$code-background-color: #080808;
+$border-color: #3a2414;
+
+$body-heading-color: #f2dcc8;
+$body-text-color: #c9b39a;
+$nav-child-link-color: #a08060;
+
+$link-color: #e8940a;
+$btn-primary-color: #c44a12;
+$base-button-color: #24180f;
+
+$search-result-preview-color: #b8a088;
+
+@import "./vendor/accessible-pygments/github-dark";
