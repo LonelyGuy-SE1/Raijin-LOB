@@ -6,7 +6,7 @@
 
 using namespace raijin;
 
-static BookConfig config{
+static BookConfig bench_config{
     .order_pool_capacity = 2000000,
     .price_level_count = 100000,
     .level_queue_capacity = 256,
@@ -16,12 +16,12 @@ static BookConfig config{
 
 static void BM_AddOrder(benchmark::State &state)
 {
-    LimitOrderBook book(config);
+    LimitOrderBook book(bench_config);
     std::uint64_t order_id = 1;
-
+    uint32_t price = 5000;
     for (auto _ : state)
     {
-        book.add_order(order_id++, 5000, 100, true);
+        book.add_order(order_id++, price++ , 100, true);
         }
 }
 BENCHMARK(BM_AddOrder);
@@ -31,6 +31,7 @@ static void BM_MatchAndEmit(benchmark::State &state)
 {
     RingBuffer<ExecutionReceipt> rb(65536);
     LimitOrderBook book(bench_config, &rb);
+    uint64_t order_id = 1;
 
     for (int i = 0; i < 1000000; ++i)
     {
