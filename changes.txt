@@ -16,13 +16,21 @@ Raijin-LOB — recommended core changes (manual review)
    Tests rely on this. Add documentation or has_best_bid()/has_best_ask() helpers.
 
 4. tombstone cost at touch during match (src/core/limit_order_book.cpp)
-   clean_front pops stale refs one at a time during match; compaction only on rest push failure.
-   High cancel rate at best price can inflate match latency.
-   Benchmark: BM_MatchThroughTombstones
-   Optional: threshold compaction in clean_front when stale pop count exceeds N.
+   FIXED: clean_front now compacts after 8 consecutive stale pops instead of
+   popping one tombstone per loop forever. BM_MatchThroughTombstones should drop
+   sharply for high tombstone counts. Single tombstone at front remains O(1) pop.
 
-5. docs/TODO.md
+5. erase_best bitscan on empty side (src/core/limit_order_book.cpp)
+   When the last ask level clears, erase_best_ask calls next_ask which scans the
+   full price radar (8192 ticks / 128 words). On single-level turnover this adds
+   cost every fill. Optional: track side-empty flag or skip scan when word tail is zero.
+
+6. locator cache on monotonic order ids
+   Benchmarks must reuse ids for fair comparison. Production sim should pool ids or
+   size locators to working set. Monotonic id 1..N touches cold locator[N] each op.
+
+7. docs/TODO.md
    Stale relative to current tests, CI, partial receipt integration, and benchmarks.
 
-6. CI benchmark guard (.github/workflows/ci.yaml)
+8. CI benchmark guard (.github/workflows/ci.yaml)
    Optional: fail job if prefill assertions would skip or if single-fill mean exceeds a loose ceiling.

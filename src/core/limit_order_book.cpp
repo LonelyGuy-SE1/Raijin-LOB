@@ -320,6 +320,8 @@ namespace raijin
 
     void LimitOrderBook::clean_front(PriceLevel &level, OrderPool &pool) noexcept
     {
+        std::uint32_t stale_pops = 0;
+
         while (!level.empty())
         {
             const OrderRef ref = level.front();
@@ -330,6 +332,15 @@ namespace raijin
             }
 
             level.pop();
+
+            if (++stale_pops >= 8)
+            {
+                level.compact([&pool](OrderRef old_ref) noexcept {
+                    return pool.generation(old_ref.index) == old_ref.generation &&
+                           pool.get_order(old_ref.index).volume != 0;
+                });
+                return;
+            }
         }
     }
 
