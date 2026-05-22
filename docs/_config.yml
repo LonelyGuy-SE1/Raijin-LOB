@@ -1,4 +1,4 @@
-title: Raijin-LOB
+title: Raijin
 description: Limit order book core — technical reference
 remote_theme: just-the-docs/just-the-docs
 
@@ -6,7 +6,6 @@ color_scheme: autumn
 search_enabled: true
 heading_anchors: true
 
-logo: "/assets/images/logo.jpg"
 favicon_ico: "/assets/images/favicon.ico"
 
 aux_links:
@@ -15,7 +14,7 @@ aux_links:
 baseurl: /Raijin-LOB
 url: https://lonelyguy-se1.github.io
 
-footer_content: "Raijin-LOB technical reference."
+footer_content: "Raijin technical reference."
 
 plugins:
   - jekyll-remote-theme

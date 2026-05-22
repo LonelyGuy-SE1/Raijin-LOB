@@ -6,7 +6,7 @@ description: "Limit order book core — technical reference"
 permalink: /
 ---
 
-# Raijin-LOB
+# Raijin
 
 C++20 limit order book with config-owned dimensions, generational order pools, per-tick FIFO queues, and optional SPSC execution receipts.
 
