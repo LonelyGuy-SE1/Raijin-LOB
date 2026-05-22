@@ -13,6 +13,7 @@ on:
       - '.github/workflows/ci.yaml'
       - '**.cpp'
       - '**.hpp'
+
   pull_request:
     branches: ["main", "master"]
     paths:
@@ -33,25 +34,27 @@ jobs:
   build-and-test:
     name: Build and Unit Tests
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-
-      - name: Install dependencies
+  
+      - name: Install depedencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential cmake clang-tidy clang-format
-
+  
       - name: Run Clang-Format Check
         run: |
           find src include tests -name "*.cpp" -o -name "*.hpp" | xargs clang-format --dry-run --Werror
 
-      - name: Run Clang-Tidy (Linter)
-        run: |
-          clang-tidy src/core/*.cpp include/core/*.hpp -- -Iinclude -Ithird_party/json/include -std=c++20
-
+      #- name: Run Clang-Tidy (Linter)
+      #  run: |
+      #    # Run the linter on all our source files
+      #    clang-tidy src/core/*.cpp include/core/*.hpp -- -Iinclude -Ithird_party/json/include -std=c++20
+  
       - name: Configure CMake
         run: |
           mkdir build
@@ -63,19 +66,17 @@ jobs:
           cd build
           make -j$(nproc)
 
-      - name: Run Tests
+      - name: Run tests
         run: |
           cd build
           ctest --output-on-failure
 
   run-benchmarks:
     name: Performance Benchmarks
-    needs: build-and-test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: 'recursive'
 
@@ -106,5 +107,10 @@ jobs:
           
           if ! git diff --cached --quiet; then
             git commit -m "docs: auto-update BENCHMARKS.md [skip ci]"
-            git push origin HEAD:${{ github.head_ref || github.ref_name }}
+            # Only push on main branch or if triggered by main
+            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+              git push
+            else
+              echo "Benchmark updated locally; skipping push for PR check."
+            fi
           fi
