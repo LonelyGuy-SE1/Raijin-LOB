@@ -3,6 +3,6 @@
 ----------------------------------------------------------
 Benchmark                Time             CPU   Iterations
 ----------------------------------------------------------
-BM_AddOrder            854 ns          854 ns       825890
-BM_MatchAndEmit        851 ns          851 ns       825758
+BM_AddOrder           2.20 ns         2.20 ns    314799387
+BM_MatchAndEmit        941 ns          941 ns       748222
 ```
