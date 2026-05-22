@@ -28,7 +28,7 @@ static void BM_DeterministicMatch_NoReceipts(benchmark::State& state) {
     state.SetItemsProcessed(state.iterations());
     state.counters["Total_Orders"] = benchmark::Counter(static_cast<double>(state.iterations()), benchmark::Counter::kDefaults);
 }
-BENCHMARK(BM_DeterministicMatch_NoReceipts);
+BENCHMARK(BM_DeterministicMatch_NoReceipts)->Iterations(1000000);
 
 static void BM_DeterministicMatch_WithReceipts(benchmark::State& state) {
     RingBuffer<ExecutionReceipt> rb(1048576);
@@ -45,6 +45,6 @@ static void BM_DeterministicMatch_WithReceipts(benchmark::State& state) {
     state.SetItemsProcessed(state.iterations());
     state.counters["Total_Orders"] = benchmark::Counter(static_cast<double>(state.iterations()), benchmark::Counter::kDefaults);
 }
-BENCHMARK(BM_DeterministicMatch_WithReceipts);
+BENCHMARK(BM_DeterministicMatch_WithReceipts)->Iterations(1000000);
 
 BENCHMARK_MAIN();
