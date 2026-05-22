@@ -12,17 +12,69 @@ Technical documentation: [docs site](https://lonelyguy-se1.github.io/Raijin-LOB/
 
 Phase 1 Benchmark Results. 
 
--------------------------------------------------------------------------------------------------------------------
-Benchmark                                                         Time             CPU   Iterations UserCounters...
--------------------------------------------------------------------------------------------------------------------
-BM_BestBidAsk                                                  3.16 ns         3.16 ns    219705540 items_per_second=632.037M/s
-BM_Compare_Arka_AddNoMatch/manual_time                         41.8 ns          111 ns     16735868 items_per_second=23.9141M/s
-BM_Compare_Arka_CancelOnly/manual_time                         61.0 ns          111 ns     11448388 items_per_second=16.3969M/s
-BM_Compare_Arka_MatchOneLevel/manual_time                      54.6 ns          104 ns     12859405 items_per_second=18.3304M/s
-BM_Compare_Arka_MatchWithReceipts/manual_time                  57.0 ns          107 ns     11338256 items_per_second=17.5422M/s
-BM_Compare_NanoMatch_MixedAdd/manual_time                      66.3 ns          108 ns     10382139 items_per_second=15.0765M/s
-BM_MultiLevelSweep/manual_time                                  106 ns          843 ns      6590855 items_per_second=9.42885M/s
-BM_MatchThroughTombstones/0/min_time:0.500/manual_time         40.9 ns          806 ns     17095797 items_per_second=24.4236M/s
-BM_MatchThroughTombstones/8/min_time:0.500/manual_time         62.1 ns          798 ns     11282177 items_per_second=16.0953M/s
-BM_MatchThroughTombstones/64/min_time:0.500/manual_time         152 ns          888 ns      4605999 items_per_second=6.57272M/s
-BM_MatchThroughTombstones/256/min_time:0.500/manual_time        497 ns         1241 ns      1426432 items_per_second=2.01325M/s
+benchmarks:
+  - name: BM_BestBidAsk
+    time_ns: 3.16
+    cpu_ns: 3.16
+    iterations: 219705540
+    throughput_mps: 632.037
+
+  - name: BM_Compare_Arka_AddNoMatch/manual_time
+    time_ns: 41.8
+    cpu_ns: 111
+    iterations: 16735868
+    throughput_mps: 23.9141
+
+  - name: BM_Compare_Arka_CancelOnly/manual_time
+    time_ns: 61.0
+    cpu_ns: 111
+    iterations: 11448388
+    throughput_mps: 16.3969
+
+  - name: BM_Compare_Arka_MatchOneLevel/manual_time
+    time_ns: 54.6
+    cpu_ns: 104
+    iterations: 12859405
+    throughput_mps: 18.3304
+
+  - name: BM_Compare_Arka_MatchWithReceipts/manual_time
+    time_ns: 57.0
+    cpu_ns: 107
+    iterations: 11338256
+    throughput_mps: 17.5422
+
+  - name: BM_Compare_NanoMatch_MixedAdd/manual_time
+    time_ns: 66.3
+    cpu_ns: 108
+    iterations: 10382139
+    throughput_mps: 15.0765
+
+  - name: BM_MultiLevelSweep/manual_time
+    time_ns: 106
+    cpu_ns: 843
+    iterations: 6590855
+    throughput_mps: 9.42885
+
+  - name: BM_MatchThroughTombstones/0/manual_time
+    time_ns: 40.9
+    cpu_ns: 806
+    iterations: 17095797
+    throughput_mps: 24.4236
+
+  - name: BM_MatchThroughTombstones/8/manual_time
+    time_ns: 62.1
+    cpu_ns: 798
+    iterations: 11282177
+    throughput_mps: 16.0953
+
+  - name: BM_MatchThroughTombstones/64/manual_time
+    time_ns: 152
+    cpu_ns: 888
+    iterations: 4605999
+    throughput_mps: 6.57272
+
+  - name: BM_MatchThroughTombstones/256/manual_time
+    time_ns: 497
+    cpu_ns: 1241
+    iterations: 1426432
+    throughput_mps: 2.01325
