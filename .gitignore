@@ -1,12 +1,11 @@
 .vscode/
 build/
+build-wsl/
 *.exe
 *.o
 *.obj
 .DS_Store
 Release/
 AGENTS.md
-docs/
-
-
+changes.txt
 

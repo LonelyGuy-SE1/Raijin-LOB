@@ -16,6 +16,14 @@ namespace
         .level_queue_capacity = 512,
         .max_order_id = 500000};
 
+    const BookConfig kTombstoneBenchConfig{
+        .order_pool_capacity = 1024,
+        .price_level_count = 256,
+        .level_queue_capacity = 512,
+        .max_order_id = 5000};
+
+    constexpr std::uint32_t kTombstoneTick = 100;
+
     double elapsed_seconds(const std::chrono::steady_clock::time_point &t0,
                            const std::chrono::steady_clock::time_point &t1)
     {
@@ -118,11 +126,14 @@ static void BM_Compare_NanoMatch_MixedAdd(benchmark::State &state)
     std::uint64_t id = 1;
     for (auto _ : state)
     {
-        if (id > kBenchConfig.max_order_id)
+        if (id > kBenchConfig.max_order_id || id % 4096 == 0)
         {
             state.PauseTiming();
             book = std::make_unique<LimitOrderBook>(kBenchConfig);
-            id = 1;
+            if (id > kBenchConfig.max_order_id)
+            {
+                id = 1;
+            }
             state.ResumeTiming();
         }
         const bool is_buy = (id & 1) != 0;
@@ -166,25 +177,38 @@ BENCHMARK(BM_MultiLevelSweep)->UseManualTime();
 static void BM_MatchThroughTombstones(benchmark::State &state)
 {
     const int tombstones = static_cast<int>(state.range(0));
-    LimitOrderBook book(kBenchConfig);
+    constexpr std::uint64_t kMakerId = 2;
+    constexpr std::uint64_t kTakerId = 3;
+    constexpr std::uint64_t kTombstoneBase = 1000;
+
+    LimitOrderBook book(kTombstoneBenchConfig);
     for (auto _ : state)
     {
         state.PauseTiming();
         for (int i = 0; i < tombstones; ++i)
         {
-            book.add_order(1, kTick, 10, false);
-            book.cancel_order(1);
+            book.add_order(kTombstoneBase + static_cast<std::uint64_t>(i), kTombstoneTick, 10, false);
         }
-        book.add_order(1, kTick, 10, false);
+        book.add_order(kMakerId, kTombstoneTick, 10, false);
+        for (int i = 0; i < tombstones; ++i)
+        {
+            book.cancel_order(kTombstoneBase + static_cast<std::uint64_t>(i));
+        }
         state.ResumeTiming();
         const auto t0 = std::chrono::steady_clock::now();
-        bool ok = book.add_order(2, kTick, 10, true);
+        bool ok = book.add_order(kTakerId, kTombstoneTick, 10, true);
         const auto t1 = std::chrono::steady_clock::now();
         benchmark::DoNotOptimize(ok);
         state.SetIterationTime(elapsed_seconds(t0, t1));
     }
     state.SetItemsProcessed(state.iterations());
 }
-BENCHMARK(BM_MatchThroughTombstones)->Arg(0)->Arg(8)->Arg(64)->Arg(256)->UseManualTime();
+BENCHMARK(BM_MatchThroughTombstones)
+    ->Arg(0)
+    ->Arg(8)
+    ->Arg(64)
+    ->Arg(256)
+    ->UseManualTime()
+    ->MinTime(0.5);
 
 BENCHMARK_MAIN();

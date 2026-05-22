@@ -1,0 +1,22 @@
+title: Raijin-LOB
+description: Limit order book core — technical reference
+remote_theme: just-the-docs/just-the-docs
+
+color_scheme: dark
+search_enabled: true
+heading_anchors: true
+
+aux_links:
+  Repository: https://github.com/LonelyGuy-SE1/Raijin-LOB
+
+baseurl: /Raijin-LOB
+url: https://lonelyguy-se1.github.io
+
+footer_content: "Raijin-LOB technical reference."
+
+plugins:
+  - jekyll-remote-theme
+
+exclude:
+  - Gemfile
+  - Gemfile.lock

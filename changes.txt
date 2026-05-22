@@ -30,7 +30,7 @@ Raijin-LOB — recommended core changes (manual review)
    size locators to working set. Monotonic id 1..N touches cold locator[N] each op.
 
 7. docs/TODO.md
-   Stale relative to current tests, CI, partial receipt integration, and benchmarks.
+   RESOLVED: full docs site in docs/ with GitHub Pages deploy (.github/workflows/pages.yml).
 
 8. CI benchmark guard (.github/workflows/ci.yaml)
-   Optional: fail job if prefill assertions would skip or if single-fill mean exceeds a loose ceiling.
+   Optional: fail job if tombstone arg(256) is not slower than arg(0), or if prefill assertions would skip.
