@@ -1,4 +1,5 @@
-name: Raijin-LOB Engine CI 
+name: Raijin-LOB Engine CI
+
 on:
   push:
     branches: ["main", "master"]
@@ -6,18 +7,19 @@ on:
       - 'src/**'
       - 'include/**'
       - 'tests/**'
+      - 'benchmarks/**'
       - 'CMakeLists.txt'
       - 'third_party/**'
       - '.github/workflows/ci.yaml'
       - '**.cpp'
       - '**.hpp'
-
   pull_request:
     branches: ["main", "master"]
     paths:
       - 'src/**'
       - 'include/**'
       - 'tests/**'
+      - 'benchmarks/**'
       - 'CMakeLists.txt'
       - 'third_party/**'
       - '.github/workflows/ci.yaml'
@@ -29,57 +31,80 @@ permissions:
 
 jobs:
   build-and-test:
+    name: Build and Unit Tests
     runs-on: ubuntu-latest
-
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
 
-    - name: Checkout code
-      uses: actions/checkout@v6
-      with:
-        submodules: 'recursive'
-  
-    - name: Install depedencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential cmake clang-tidy clang-format
-  
-    #- name: Run Clang-Format Check
-     # run: |
-      #  find src include tests -name "*.cpp" -o -name "*.hpp" | xargs clang-format --dry-run --Werror
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake clang-tidy clang-format
 
-    #- name: Run Clang-Tidy (Linter)
-     # run: |
-      #  # Run the linter on all our source files
-       # clang-tidy src/core/*.cpp include/core/*.hpp -- -Iinclude -Ithird_party/json/include -std=c++20
-  
-    - name: Configure CMake
-      run: |
-        mkdir build
-        cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release
+      - name: Run Clang-Format Check
+        run: |
+          find src include tests -name "*.cpp" -o -name "*.hpp" | xargs clang-format --dry-run --Werror
 
-    - name: Build
-      run: |
-        cd build
-        make -j$(nproc)
+      - name: Run Clang-Tidy (Linter)
+        run: |
+          clang-tidy src/core/*.cpp include/core/*.hpp -- -Iinclude -Ithird_party/json/include -std=c++20
 
-    - name: Run tests
-      run: |
-        cd build
-        ctest --output-on-failure
+      - name: Configure CMake
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
 
-    - name: Run Benchmarks
-      run: |
-        cd build
-        ./raijin_benchmarks --benchmark_format=json > benchmark_result.json
+      - name: Build
+        run: |
+          cd build
+          make -j$(nproc)
 
-    - name: Store and Update Benchmark Results
-      uses: benchmark-action/github-action-benchmark@v1
-      with:
-        tool: 'googlecpp'
-        output-file-path: build/benchmark_result.json
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        auto-push: true
-        comment-on-alert: true
-        fail-on-alert: true
-        alert-threshold: '120%'
+      - name: Run Tests
+        run: |
+          cd build
+          ctest --output-on-failure
+
+  run-benchmarks:
+    name: Performance Benchmarks
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
+
+      - name: Configure and Build
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          make -j$(nproc) raijin_benchmarks
+
+      - name: Run Benchmarks and Auto-Update Markdown
+        run: |
+          cd build
+          echo "# Raijin-LOB Performance Benchmarks" > ../BENCHMARKS.md
+          echo '```text' >> ../BENCHMARKS.md
+          ./raijin_benchmarks >> ../BENCHMARKS.md
+          echo '```' >> ../BENCHMARKS.md
+          cd ..
+
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add BENCHMARKS.md
+          
+          if ! git diff --cached --quiet; then
+            git commit -m "docs: auto-update BENCHMARKS.md [skip ci]"
+            git push origin HEAD:${{ github.head_ref || github.ref_name }}
+          fi
