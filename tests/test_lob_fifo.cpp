@@ -6,7 +6,7 @@ using namespace raijin;
 
 TEST(LobFifoTest, SamePriceSellQueueOrder)
 {
-    LimitOrderBook book(test::wide_config());
+    LimitOrderBook book(test::small_config());
 
     EXPECT_TRUE(book.add_order(1, 5000, 10, false));
     EXPECT_TRUE(book.add_order(2, 5000, 20, false));
@@ -25,7 +25,7 @@ TEST(LobFifoTest, SamePriceSellQueueOrder)
 
 TEST(LobFifoTest, SamePriceBuyQueueOrder)
 {
-    LimitOrderBook book(test::wide_config());
+    LimitOrderBook book(test::small_config());
 
     EXPECT_TRUE(book.add_order(1, 5000, 15, true));
     EXPECT_TRUE(book.add_order(2, 5000, 25, true));
@@ -40,7 +40,7 @@ TEST(LobFifoTest, SamePriceBuyQueueOrder)
 
 TEST(LobFifoTest, PartialFillLeavesHeadOrder)
 {
-    LimitOrderBook book(test::wide_config());
+    LimitOrderBook book(test::small_config());
 
     EXPECT_TRUE(book.add_order(1, 5000, 100, false));
     EXPECT_TRUE(book.add_order(2, 5000, 50, false));
@@ -54,7 +54,7 @@ TEST(LobFifoTest, PartialFillLeavesHeadOrder)
 
 TEST(LobFifoTest, MatchSkipsCancelledHead)
 {
-    LimitOrderBook book(test::wide_config());
+    LimitOrderBook book(test::small_config());
 
     EXPECT_TRUE(book.add_order(1, 5000, 10, false));
     EXPECT_TRUE(book.add_order(2, 5000, 20, false));

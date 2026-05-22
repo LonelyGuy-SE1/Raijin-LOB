@@ -1,0 +1,28 @@
+Raijin-LOB — recommended core changes (manual review)
+
+1. add_order partial-apply semantics (src/core/limit_order_book.cpp)
+   match_buy/match_sell run before rest_order. If rest fails (pool or level queue full),
+   fills are already committed but add_order returns false.
+   Test: LimitOrderBookCapacityTest.PartialMatchRestFailsWhenPoolFull
+   Options: reserve capacity before match, split API, or document partial-apply contract.
+
+2. execution receipt loss (src/core/limit_order_book.cpp)
+   receipt_queue_->push(...) return value is ignored. Full ring drops trades silently.
+   Test: LimitOrderBookReceiptTest.FullRingDropsReceiptSilently
+   Options: propagate failure, block match on full ring, or expose overflow counter.
+
+3. empty-book sentinel (include/core/limit_order_book.hpp)
+   best_bid_tick() / best_ask_tick() return UINT32_MAX when empty. Undocumented in header.
+   Tests rely on this. Add documentation or has_best_bid()/has_best_ask() helpers.
+
+4. tombstone cost at touch during match (src/core/limit_order_book.cpp)
+   clean_front pops stale refs one at a time during match; compaction only on rest push failure.
+   High cancel rate at best price can inflate match latency.
+   Benchmark: BM_MatchThroughTombstones
+   Optional: threshold compaction in clean_front when stale pop count exceeds N.
+
+5. docs/TODO.md
+   Stale relative to current tests, CI, partial receipt integration, and benchmarks.
+
+6. CI benchmark guard (.github/workflows/ci.yaml)
+   Optional: fail job if prefill assertions would skip or if single-fill mean exceeds a loose ceiling.

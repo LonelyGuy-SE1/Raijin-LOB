@@ -34,9 +34,10 @@ static void BM_RestAdd_Bid(benchmark::State &state)
         state.PauseTiming();
         LimitOrderBook book(kBenchConfig);
         state.ResumeTiming();
-        const bool ok = book.add_order(1, kTick, 10, true);
+        bool ok = book.add_order(1, kTick, 10, true);
         benchmark::DoNotOptimize(ok);
-        benchmark::DoNotOptimize(book.best_bid_tick());
+        std::uint32_t best = book.best_bid_tick();
+        benchmark::DoNotOptimize(best);
     }
     state.SetItemsProcessed(state.iterations());
 }
@@ -49,9 +50,10 @@ static void BM_RestAdd_Ask(benchmark::State &state)
         state.PauseTiming();
         LimitOrderBook book(kBenchConfig);
         state.ResumeTiming();
-        const bool ok = book.add_order(1, kTick, 10, false);
+        bool ok = book.add_order(1, kTick, 10, false);
         benchmark::DoNotOptimize(ok);
-        benchmark::DoNotOptimize(book.best_ask_tick());
+        std::uint32_t best = book.best_ask_tick();
+        benchmark::DoNotOptimize(best);
     }
     state.SetItemsProcessed(state.iterations());
 }
@@ -65,9 +67,10 @@ static void BM_Cancel(benchmark::State &state)
         LimitOrderBook book(kBenchConfig);
         book.add_order(1, kTick, 10, true);
         state.ResumeTiming();
-        const bool ok = book.cancel_order(1);
+        bool ok = book.cancel_order(1);
         benchmark::DoNotOptimize(ok);
-        benchmark::DoNotOptimize(book.best_bid_tick());
+        std::uint32_t best = book.best_bid_tick();
+        benchmark::DoNotOptimize(best);
     }
     state.SetItemsProcessed(state.iterations());
 }
@@ -80,8 +83,10 @@ static void BM_BestBidAsk(benchmark::State &state)
     book.add_order(2, kTick + 10, 10, false);
     for (auto _ : state)
     {
-        benchmark::DoNotOptimize(book.best_bid_tick());
-        benchmark::DoNotOptimize(book.best_ask_tick());
+        std::uint32_t bid = book.best_bid_tick();
+        std::uint32_t ask = book.best_ask_tick();
+        benchmark::DoNotOptimize(bid);
+        benchmark::DoNotOptimize(ask);
     }
     state.SetItemsProcessed(state.iterations() * 2);
 }
@@ -95,11 +100,13 @@ static void BM_SingleFill_NoReceipts(benchmark::State &state)
     book.add_order(maker++, kTick, 10, false);
     for (auto _ : state)
     {
-        const bool ok = book.add_order(taker++, kTick, 10, true);
+        bool ok = book.add_order(taker++, kTick, 10, true);
         benchmark::DoNotOptimize(ok);
-        benchmark::DoNotOptimize(book.ask_volume(kTick));
+        std::uint64_t vol = book.ask_volume(kTick);
+        benchmark::DoNotOptimize(vol);
         book.add_order(maker++, kTick, 10, false);
-        benchmark::DoNotOptimize(book.best_ask_tick());
+        std::uint32_t best = book.best_ask_tick();
+        benchmark::DoNotOptimize(best);
     }
     state.SetItemsProcessed(state.iterations());
 }
@@ -114,11 +121,13 @@ static void BM_SingleFill_WithReceipts(benchmark::State &state)
     book.add_order(maker++, kTick, 10, false);
     for (auto _ : state)
     {
-        const bool ok = book.add_order(taker++, kTick, 10, true);
+        bool ok = book.add_order(taker++, kTick, 10, true);
         benchmark::DoNotOptimize(ok);
-        benchmark::DoNotOptimize(book.ask_volume(kTick));
+        std::uint64_t vol = book.ask_volume(kTick);
+        benchmark::DoNotOptimize(vol);
         book.add_order(maker++, kTick, 10, false);
-        benchmark::DoNotOptimize(book.best_ask_tick());
+        std::uint32_t best = book.best_ask_tick();
+        benchmark::DoNotOptimize(best);
     }
     state.SetItemsProcessed(state.iterations());
 }
@@ -146,11 +155,13 @@ static void BM_DeepFifo(benchmark::State &state)
     std::uint64_t maker = static_cast<std::uint64_t>(depth) + 1000000;
     for (auto _ : state)
     {
-        const bool ok = book.add_order(taker++, kTick, vol, true);
+        bool ok = book.add_order(taker++, kTick, vol, true);
         benchmark::DoNotOptimize(ok);
-        benchmark::DoNotOptimize(book.ask_volume(kTick));
+        std::uint64_t vol_left = book.ask_volume(kTick);
+        benchmark::DoNotOptimize(vol_left);
         book.add_order(maker++, kTick, vol, false);
-        benchmark::DoNotOptimize(book.best_ask_tick());
+        std::uint32_t best = book.best_ask_tick();
+        benchmark::DoNotOptimize(best);
     }
     state.SetItemsProcessed(state.iterations());
 }
@@ -170,9 +181,10 @@ static void BM_MultiLevelSweep(benchmark::State &state)
             book.add_order(id++, t, vol, false);
         }
         state.ResumeTiming();
-        const bool ok = book.add_order(id++, kTick + levels - 1, vol * levels, true);
+        bool ok = book.add_order(id++, kTick + levels - 1, vol * levels, true);
         benchmark::DoNotOptimize(ok);
-        benchmark::DoNotOptimize(book.best_ask_tick());
+        std::uint32_t best = book.best_ask_tick();
+        benchmark::DoNotOptimize(best);
     }
     state.SetItemsProcessed(state.iterations());
 }
@@ -194,9 +206,10 @@ static void BM_MatchThroughTombstones(benchmark::State &state)
         }
         book.add_order(id++, kTick, 10, false);
         state.ResumeTiming();
-        const bool ok = book.add_order(taker++, kTick, 10, true);
+        bool ok = book.add_order(taker++, kTick, 10, true);
         benchmark::DoNotOptimize(ok);
-        benchmark::DoNotOptimize(book.ask_volume(kTick));
+        std::uint64_t vol = book.ask_volume(kTick);
+        benchmark::DoNotOptimize(vol);
     }
     state.SetItemsProcessed(state.iterations());
 }
@@ -213,9 +226,10 @@ static void BM_DeterministicMatch_NoReceipts(benchmark::State &state)
     std::uint64_t taker = 1000001;
     for (auto _ : state)
     {
-        const bool ok = book.add_order(taker++, kTick, 10, true);
+        bool ok = book.add_order(taker++, kTick, 10, true);
         benchmark::DoNotOptimize(ok);
-        benchmark::DoNotOptimize(book.ask_volume(kTick));
+        std::uint64_t vol = book.ask_volume(kTick);
+        benchmark::DoNotOptimize(vol);
     }
     state.SetItemsProcessed(state.iterations());
 }
@@ -233,9 +247,10 @@ static void BM_DeterministicMatch_WithReceipts(benchmark::State &state)
     std::uint64_t taker = 1000001;
     for (auto _ : state)
     {
-        const bool ok = book.add_order(taker++, kTick, 10, true);
+        bool ok = book.add_order(taker++, kTick, 10, true);
         benchmark::DoNotOptimize(ok);
-        benchmark::DoNotOptimize(book.ask_volume(kTick));
+        std::uint64_t vol = book.ask_volume(kTick);
+        benchmark::DoNotOptimize(vol);
     }
     state.SetItemsProcessed(state.iterations());
 }
