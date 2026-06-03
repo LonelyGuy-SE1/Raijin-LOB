@@ -19,13 +19,84 @@ namespace raijin
         std::uint64_t max_order_id;
     };
 
+    struct AddResult
+    {
+        bool valid = false;
+        bool accepted = false;
+        std::uint32_t matched_volume = 0;
+        std::uint32_t rested_volume = 0;
+        std::uint32_t dropped_volume = 0;
+    };
+
+    struct ModifyResult
+    {
+        bool valid = false;
+        bool cancelled = false;
+        bool reested = false;
+        std::uint32_t dropped_volume = 0;
+    };
+
     class LimitOrderBook
     {
     public:
         explicit LimitOrderBook(const BookConfig &config, RingBuffer<ExecutionReceipt> *receipt_queue = nullptr);
 
-        bool add_order(std::uint64_t order_id, std::uint32_t price_tick, std::uint32_t volume, bool is_buy);
+        inline AddResult add_order(std::uint64_t order_id, std::uint32_t price_tick, std::uint32_t volume, bool is_buy,
+                                   OrderType type = OrderType::Limit, TimeInForce tif = TimeInForce::GTC,
+                                   std::uint64_t timestamp = 0)
+        {
+            (void)timestamp;
+
+            if (type == OrderType::Limit && tif == TimeInForce::GTC) [[likely]]
+            {
+                AddResult result{};
+                result.valid = true;
+
+                if (volume == 0 || price_tick >= config_.price_level_count ||
+                    !valid_order_id(order_id) || locators_[order_id].active != 0)
+                {
+                    result.valid = false;
+                    return result;
+                }
+
+                Order incoming{order_id, volume, price_tick};
+
+                if (is_buy)
+                {
+                    match_buy(incoming);
+                }
+                else
+                {
+                    match_sell(incoming);
+                }
+
+                if (incoming.volume == 0)
+                {
+                    result.accepted = true;
+                    result.matched_volume = volume;
+                    return result;
+                }
+
+                bool rested = rest_order(incoming, is_buy);
+                result.matched_volume = volume - incoming.volume;
+
+                if (rested)
+                {
+                    result.accepted = true;
+                    result.rested_volume = incoming.volume;
+                    return result;
+                }
+
+                result.accepted = result.matched_volume > 0;
+                result.dropped_volume = incoming.volume;
+                return result;
+            }
+
+            return add_order_slow(order_id, price_tick, volume, is_buy, type, tif);
+        }
+
         bool cancel_order(std::uint64_t order_id) noexcept;
+        ModifyResult modify_order(std::uint64_t order_id, std::uint32_t new_price_tick, std::uint32_t new_volume);
 
         std::uint32_t best_bid_tick() const noexcept;
         std::uint32_t best_ask_tick() const noexcept;
@@ -33,7 +104,6 @@ namespace raijin
         bool has_best_ask() const noexcept { return best_ask_ != invalid_tick; }
         std::uint64_t bid_volume(std::uint32_t price_tick) const noexcept;
         std::uint64_t ask_volume(std::uint32_t price_tick) const noexcept;
-        std::uint64_t receipt_overflows() const noexcept { return receipt_overflows_; }
 
     private:
         struct Locator
@@ -52,9 +122,12 @@ namespace raijin
         static void set_bit(std::vector<std::uint64_t> &words, std::uint32_t tick, std::uint32_t &active_levels) noexcept;
         static void reset_bit(std::vector<std::uint64_t> &words, std::uint32_t tick, std::uint32_t &active_levels) noexcept;
 
+        AddResult add_order_slow(std::uint64_t order_id, std::uint32_t price_tick, std::uint32_t volume, bool is_buy,
+                                 OrderType type, TimeInForce tif);
         bool rest_order(const Order &order, bool is_buy) noexcept;
         void match_buy(Order &incoming) noexcept;
         void match_sell(Order &incoming) noexcept;
+        void push_receipt(const ExecutionReceipt &receipt) noexcept;
         void clean_front(PriceLevel &level, OrderPool &pool) noexcept;
         void erase_best_ask(std::uint32_t tick) noexcept;
         void erase_best_bid(std::uint32_t tick) noexcept;
@@ -77,6 +150,5 @@ namespace raijin
         std::uint32_t bid_active_levels_ = 0;
         std::uint32_t ask_active_levels_ = 0;
         RingBuffer<ExecutionReceipt> *receipt_queue_;
-        std::uint64_t receipt_overflows_ = 0;
     };
 }

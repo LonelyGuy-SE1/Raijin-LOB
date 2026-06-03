@@ -47,7 +47,7 @@ RingBuffer<ExecutionReceipt> rb(65536);
 LimitOrderBook book(config, &rb);
 ```
 
-Matching calls `push` on each fill when pointer is non-null. LOB never calls `pop`. Full ring: `push` returns `false`; fill is still committed.
+Matching calls `push` on each fill when pointer is non-null. LOB never calls `pop`. When the ring is full, the receipt is silently dropped.
 
 ## Concurrency
 

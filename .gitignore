@@ -6,5 +6,4 @@ build-wsl/
 *.obj
 .DS_Store
 Release/
-AGENTS.md
 

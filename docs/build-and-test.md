@@ -10,7 +10,7 @@ nav_order: 10
 
 | Component | Version |
 | --- | --- |
-| OS | Linux |
+| OS | Linux (supported target) |
 | Compiler | GCC ≥ 10 or Clang ≥ 12 |
 | C++ | C++20 |
 | CMake | ≥ 3.14 |
@@ -53,7 +53,7 @@ Submodules: `git submodule update --init --recursive`
 
 ## Test matrix
 
-55 cases across four files.
+57 cases across four files.
 
 ### `test_limit_order_book.cpp`
 
@@ -67,7 +67,8 @@ Submodules: `git submodule update --init --recursive`
 | ID reuse | After cancel, after fill |
 | Best price | Gap refresh, bid and ask |
 | Capacity | Pool exhaustion, queue full, match-then-rest failure |
-| Receipts | Full fill, partial, multi-level, ring full, cancel |
+| Receipts | Full fill, partial, multi-level, ring full (Drop), Spin policy, cancel |
+| AddResult | Partial rest failure reports dropped volume |
 
 Fixture default: `price_level_count=100000`, `level_queue_capacity=256`, `max_order_id=1000`.
 

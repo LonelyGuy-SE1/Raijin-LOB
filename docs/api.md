@@ -60,13 +60,41 @@ One receipt per fill. Maker = resting order; taker = aggressive order.
 | `level_queue_capacity` | `uint32_t` | FIFO depth per tick; power of two |
 | `max_order_id` | `uint64_t` | Max valid `order_id`; locator size = `max_order_id + 1` |
 
+### `AddResult`
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `valid` | `bool` | Input passed validation |
+| `accepted` | `bool` | Any volume matched or rested |
+| `matched_volume` | `uint32_t` | Total volume matched |
+| `rested_volume` | `uint32_t` | Volume successfully rested |
+| `dropped_volume` | `uint32_t_t` | Unmatched remainder that failed to rest |
+
 ## `add_order`
 
 ```cpp
-bool add_order(uint64_t order_id, uint32_t price_tick, uint32_t volume, bool is_buy);
+AddResult add_order(uint64_t order_id, uint32_t price_tick, uint32_t volume, bool is_buy,
+                    OrderType type = OrderType::Limit, TimeInForce tif = TimeInForce::GTC);
 ```
 
-### Preconditions (returns `false`, no state change)
+The fast path (Limit + GTC) is inlined in the header. Market, IOC, and FOK forward to a cold path in the .cpp.
+
+### Order types
+
+| Type | Behavior |
+| --- | --- |
+| `Limit` | Cross as much as possible, rest remainder |
+| `Market` | Cross entire book; no rest; unmatched = dropped |
+
+### Time-in-force
+
+| TIF | Behavior |
+| --- | --- |
+| `GTC` | Good-till-cancelled; rest unmatched |
+| `IOC` | Immediate-or-cancel; fill what you can, cancel rest |
+| `FOK` | Fill-or-kill; reject if insufficient aggregate volume |
+
+### Preconditions (returns `AddResult{valid=false}`, no state change)
 
 | Condition |
 | --- |
@@ -90,18 +118,19 @@ Walks opposite side best-to-worst. Within each tick, FIFO head after `clean_fron
 
 Executed when incoming `volume > 0` after matching.
 
-Returns `false` when pool is exhausted or level queue is full after compaction.
+Rest fails when pool is exhausted or level queue is full after compaction. The unmatched remainder is reported as `dropped_volume`.
 
 ### Return value semantics
 
-| Outcome | Return |
+| Outcome | Result |
 | --- | --- |
-| Fully matched, nothing to rest | `true` |
-| Rest succeeds | `true` |
-| Match commits fills, rest fails | `true` (fills retained, remainder dropped) |
-| Validation failure | `false` |
+| Fully matched, nothing to rest | `accepted=true`, `matched_volume=volume` |
+| Rest succeeds | `accepted=true`, `rested_volume>0` |
+| Match commits fills, rest fails | `accepted=true`, `dropped_volume>0` |
+| Validation failure | `valid=false` |
+| Unmatched and rest fails | `accepted=false`, `dropped_volume=volume` |
 
-Matching precedes rest. `add_order` returns `true` if any volume was matched or successfully rested. It only returns `false` if validation fails or a completely unmatched order fails to rest.
+Matching precedes rest. `accepted` is true when any volume matched or rested. Residual volume that cannot rest is reported as `dropped_volume`.
 
 ## `cancel_order`
 
@@ -143,8 +172,22 @@ uint64_t ask_volume(uint32_t price_tick) const noexcept;
 
 ## Receipt integration
 
-When `receipt_queue_` is non-null, each fill calls `push`. If the ring is full, the receipt is dropped (fill remains committed) and an internal overflow counter is incremented. Consumer must drain the ring via `pop`.
-Total dropped receipts can be queried via `uint64_t receipt_overflows() const noexcept`.
+When `receipt_queue_` is non-null, each fill calls `push`. When the ring is full, the receipt is silently dropped. Consumer must drain the ring via `pop`.
+
+## `modify_order`
+
+```cpp
+ModifyResult modify_order(uint64_t order_id, uint32_t new_price_tick, uint32_t new_volume);
+```
+
+Cancel-and-re-add. Returns `ModifyResult`:
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `valid` | `bool` | Input passed validation |
+| `cancelled` | `bool` | Original order was cancelled |
+| `reested` | `bool` | New order was successfully rested |
+| `dropped_volume` | `uint32_t` | Volume that failed to rest |
 
 ## Thread safety
 

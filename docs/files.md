@@ -27,6 +27,12 @@ nav_order: 9
 | --- | --- |
 | `config/settings.json` | Default `BookConfig` |
 
+## Docs
+
+| Path | Description |
+| --- | --- |
+| `docs/known-issues.md` | Known issues ledger |
+
 ## Tests
 
 | Path | Description |

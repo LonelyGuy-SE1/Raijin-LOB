@@ -29,14 +29,82 @@ namespace raijin
         }
     }
 
-    bool LimitOrderBook::add_order(std::uint64_t order_id, std::uint32_t price_tick, std::uint32_t volume, bool is_buy)
+    AddResult LimitOrderBook::add_order_slow(std::uint64_t order_id, std::uint32_t price_tick, std::uint32_t volume,
+                                             bool is_buy, OrderType type, TimeInForce tif)
     {
-        if (volume == 0 || price_tick >= config_.price_level_count || !valid_order_id(order_id) || locators_[order_id].active != 0)
+        AddResult result{};
+        result.valid = true;
+
+        if (volume == 0 || !valid_order_id(order_id) || locators_[order_id].active != 0)
         {
-            return false;
+            result.valid = false;
+            return result;
         }
 
-        Order incoming{order_id, volume, price_tick};
+        if (type == OrderType::Limit && price_tick >= config_.price_level_count)
+        {
+            result.valid = false;
+            return result;
+        }
+
+        if (tif == TimeInForce::FOK)
+        {
+            std::uint32_t available = 0;
+            if (is_buy)
+            {
+                std::uint32_t tick = best_ask_;
+                while (tick != invalid_tick)
+                {
+                    if (type == OrderType::Limit && tick > price_tick) break;
+                    available += static_cast<std::uint32_t>(ask_levels_[tick].total_volume());
+                    if (available >= volume) break;
+                    const std::size_t word = tick >> 6;
+                    const std::uint32_t pos = tick & 63;
+                    std::uint64_t bits = ask_words_[word];
+                    bits &= ~((1ULL << pos) - 1);
+                    bits &= ~(1ULL << pos);
+                    if (bits != 0)
+                    {
+                        tick = static_cast<std::uint32_t>((word << 6) + __builtin_ctzll(bits));
+                        continue;
+                    }
+                    tick = invalid_tick;
+                    for (std::size_t w = word + 1; w < ask_words_.size(); ++w)
+                    {
+                        if (ask_words_[w] != 0)
+                        {
+                            tick = static_cast<std::uint32_t>((w << 6) + __builtin_ctzll(ask_words_[w]));
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                std::uint32_t tick = best_bid_;
+                while (tick != invalid_tick)
+                {
+                    if (type == OrderType::Limit && tick < price_tick) break;
+                    available += static_cast<std::uint32_t>(bid_levels_[tick].total_volume());
+                    if (available >= volume) break;
+                    if (tick == 0) break;
+                    tick = next_bid(tick - 1);
+                }
+            }
+            if (available < volume)
+            {
+                result.valid = true;
+                result.accepted = false;
+                result.dropped_volume = volume;
+                return result;
+            }
+        }
+
+        const std::uint32_t cross_tick = type == OrderType::Market
+                                             ? (is_buy ? config_.price_level_count - 1 : 0)
+                                             : price_tick;
+
+        Order incoming{order_id, volume, cross_tick};
 
         if (is_buy)
         {
@@ -47,13 +115,98 @@ namespace raijin
             match_sell(incoming);
         }
 
+        result.matched_volume = volume - incoming.volume;
+
+        if (type == OrderType::Market || tif == TimeInForce::IOC)
+        {
+            if (incoming.volume > 0)
+            {
+                result.dropped_volume += incoming.volume;
+                incoming.volume = 0;
+            }
+            result.accepted = result.matched_volume > 0;
+            return result;
+        }
+
         if (incoming.volume == 0)
         {
-            return true;
+            result.accepted = true;
+            result.rested_volume = 0;
+            return result;
         }
 
         bool rested = rest_order(incoming, is_buy);
-        return rested || (incoming.volume < volume);
+
+        if (rested)
+        {
+            result.accepted = true;
+            result.rested_volume = incoming.volume;
+            return result;
+        }
+
+        result.accepted = result.matched_volume > 0;
+        result.dropped_volume = incoming.volume;
+        return result;
+    }
+
+    ModifyResult LimitOrderBook::modify_order(std::uint64_t order_id, std::uint32_t new_price_tick,
+                                              std::uint32_t new_volume)
+    {
+        ModifyResult result{};
+
+        if (!valid_order_id(order_id) || new_volume == 0 || new_price_tick >= config_.price_level_count)
+        {
+            result.valid = false;
+            return result;
+        }
+
+        result.valid = true;
+
+        Locator &locator = locators_[order_id];
+
+        if (locator.active == 0)
+        {
+            return result;
+        }
+
+        OrderPool &pool = locator.side != 0 ? bid_pool_ : ask_pool_;
+
+        if (pool.generation(locator.index) != locator.generation)
+        {
+            locator.active = 0;
+            return result;
+        }
+
+        Order &order = pool.get_order(locator.index);
+        const bool is_buy = locator.side != 0;
+        const std::uint32_t old_price = order.price_tick;
+        PriceLevel &level = is_buy ? bid_levels_[old_price] : ask_levels_[old_price];
+
+        level.remove_volume(order.volume);
+        order.volume = 0;
+        pool.deallocate(locator.index);
+        locator.active = 0;
+
+        if (level.total_volume() == 0)
+        {
+            level.clear();
+            if (is_buy)
+            {
+                erase_best_bid(old_price);
+            }
+            else
+            {
+                erase_best_ask(old_price);
+            }
+        }
+
+        result.cancelled = true;
+
+        AddResult add_result = add_order(order_id, new_price_tick, new_volume, is_buy);
+        result.reested = add_result.rested_volume > 0;
+        result.dropped_volume = add_result.dropped_volume;
+
+        return result;
     }
 
     bool LimitOrderBook::cancel_order(std::uint64_t order_id) noexcept
@@ -241,8 +394,13 @@ namespace raijin
 
     void LimitOrderBook::match_buy(Order &incoming) noexcept
     {
-        while (incoming.volume != 0 && best_ask_ != invalid_tick && best_ask_ <= incoming.price_tick)
+        while (incoming.volume != 0 && best_ask_ != invalid_tick)
         {
+            if (incoming.price_tick < best_ask_)
+            {
+                break;
+            }
+
             PriceLevel &level = ask_levels_[best_ask_];
             clean_front(level, ask_pool_);
 
@@ -261,16 +419,12 @@ namespace raijin
             resting.volume -= fill;
             level.remove_volume(fill);
 
-            if (receipt_queue_){
-                if (!receipt_queue_->push({
-                    .maker_order_id = resting.order_id,
-                    .taker_order_id = incoming.order_id,
-                    .price_tick = resting.price_tick,
-                    .executed_volume = fill
-                })) {
-                    ++receipt_overflows_;
-                }
-            }
+            const ExecutionReceipt receipt{
+                .maker_order_id = resting.order_id,
+                .taker_order_id = incoming.order_id,
+                .price_tick = resting.price_tick,
+                .executed_volume = fill};
+            push_receipt(receipt);
 
             if (resting.volume == 0)
             {
@@ -289,8 +443,13 @@ namespace raijin
 
     void LimitOrderBook::match_sell(Order &incoming) noexcept
     {
-        while (incoming.volume != 0 && best_bid_ != invalid_tick && incoming.price_tick <= best_bid_)
+        while (incoming.volume != 0 && best_bid_ != invalid_tick)
         {
+            if (incoming.price_tick > best_bid_)
+            {
+                break;
+            }
+
             PriceLevel &level = bid_levels_[best_bid_];
             clean_front(level, bid_pool_);
 
@@ -309,17 +468,13 @@ namespace raijin
             resting.volume -= fill;
             level.remove_volume(fill);
 
-            if (receipt_queue_){
-                if (!receipt_queue_->push({
-                    .maker_order_id = resting.order_id,
-                    .taker_order_id = incoming.order_id,
-                    .price_tick = resting.price_tick,
-                    .executed_volume = fill
-                })) {
-                    ++receipt_overflows_;
-                }
-            }
-            
+            const ExecutionReceipt receipt{
+                .maker_order_id = resting.order_id,
+                .taker_order_id = incoming.order_id,
+                .price_tick = resting.price_tick,
+                .executed_volume = fill};
+            push_receipt(receipt);
+
             if (resting.volume == 0)
             {
                 locators_[resting.order_id].active = 0;
@@ -332,6 +487,14 @@ namespace raijin
                 level.clear();
                 erase_best_bid(best_bid_);
             }
+        }
+    }
+
+    void LimitOrderBook::push_receipt(const ExecutionReceipt &receipt) noexcept
+    {
+        if (receipt_queue_)
+        {
+            receipt_queue_->push(receipt);
         }
     }
 

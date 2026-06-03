@@ -5,31 +5,20 @@
 
 namespace raijin
 {
-    std::size_t OrderPool::arena_bytes(std::size_t capacity)
+    std::size_t OrderPool::checked_capacity(std::size_t capacity)
     {
-        constexpr std::size_t bytes_per_order = sizeof(Order) + sizeof(PoolIndex) + sizeof(std::uint32_t);
-        constexpr std::size_t padding = alignof(Order) * 8;
-
         if (capacity == 0 || capacity > std::numeric_limits<PoolIndex>::max())
         {
             throw std::invalid_argument("invalid order pool capacity");
         }
-
-        if (capacity > (std::numeric_limits<std::size_t>::max() - padding) / bytes_per_order)
-        {
-            throw std::invalid_argument("order pool arena overflow");
-        }
-
-        return capacity * bytes_per_order + padding;
+        return capacity;
     }
 
     OrderPool::OrderPool(std::size_t capacity)
-        : arena_(arena_bytes(capacity)),
-          memory_(arena_.data(), arena_.size(), std::pmr::null_memory_resource()),
-          orders_(capacity, &memory_),
-          free_(capacity, &memory_),
-          generations_(capacity, 1, &memory_),
-          free_count_(capacity)
+        : orders_(checked_capacity(capacity)),
+          free_(checked_capacity(capacity)),
+          generations_(checked_capacity(capacity), 1),
+          free_count_(checked_capacity(capacity))
     {
         for (std::size_t i = 0; i < capacity; ++i)
         {

@@ -1,4 +1,3 @@
-// this will be a template, so there is no need for cpp.
 #pragma once
 
 #include <atomic>

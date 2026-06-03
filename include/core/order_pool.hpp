@@ -4,7 +4,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <memory_resource>
 #include <vector>
 
 namespace raijin
@@ -27,13 +26,11 @@ namespace raijin
         std::size_t capacity() const noexcept;
 
     private:
-        static std::size_t arena_bytes(std::size_t capacity);
+        static std::size_t checked_capacity(std::size_t capacity);
 
-        std::vector<std::byte> arena_;
-        std::pmr::monotonic_buffer_resource memory_;
-        std::pmr::vector<Order> orders_;
-        std::pmr::vector<PoolIndex> free_;
-        std::pmr::vector<std::uint32_t> generations_;
+        std::vector<Order> orders_;
+        std::vector<PoolIndex> free_;
+        std::vector<std::uint32_t> generations_;
         std::size_t free_count_;
     };
 }

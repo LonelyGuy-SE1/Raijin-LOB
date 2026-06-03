@@ -55,7 +55,7 @@ Manual timing wraps only the labeled operation. Setup and teardown run outside t
 | `BM_MultiLevelSweep` | Persistent book; five asks prefilled per iteration (paused) |
 | `BM_MatchThroughTombstones` | Persistent book; tombstone prefill per iteration (paused) |
 
-Order id reuse on hot paths avoids locator cold misses. Monotonic ids without reset bias toward locator allocation cost.
+Order id reuse on hot paths avoids locator cold misses. Monotonic ids without reset bias toward locator allocation cost. Benchmarks use `AddResult.accepted` to avoid counting rejected adds.
 
 ## Catalog
 

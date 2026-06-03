@@ -55,7 +55,7 @@ static void BM_Compare_Arka_AddNoMatch(benchmark::State &state)
     {
         const std::uint32_t tick = kTick + (rot % 20);
         const auto t0 = std::chrono::steady_clock::now();
-        bool ok = book.add_order(1, tick, 100, true);
+        bool ok = book.add_order(1, tick, 100, true).accepted;
         const auto t1 = std::chrono::steady_clock::now();
         benchmark::DoNotOptimize(ok);
         state.SetIterationTime(elapsed_seconds(t0, t1));
@@ -74,9 +74,9 @@ static void BM_Compare_Arka_CancelOnly(benchmark::State &state)
     for (auto _ : state)
     {
         const auto t0 = std::chrono::steady_clock::now();
-        bool ok = book.cancel_order(1);
+        book.cancel_order(1);
         const auto t1 = std::chrono::steady_clock::now();
-        benchmark::DoNotOptimize(ok);
+        benchmark::DoNotOptimize(true);
         state.SetIterationTime(elapsed_seconds(t0, t1));
         book.add_order(1, kTick + (rot % 20), 100, true);
         ++rot;
@@ -92,7 +92,7 @@ static void BM_Compare_Arka_MatchOneLevel(benchmark::State &state)
     for (auto _ : state)
     {
         const auto t0 = std::chrono::steady_clock::now();
-        bool ok = book.add_order(2, kTick, 100, true);
+        bool ok = book.add_order(2, kTick, 100, true).accepted;
         const auto t1 = std::chrono::steady_clock::now();
         benchmark::DoNotOptimize(ok);
         state.SetIterationTime(elapsed_seconds(t0, t1));
@@ -110,7 +110,7 @@ static void BM_Compare_Arka_MatchWithReceipts(benchmark::State &state)
     for (auto _ : state)
     {
         const auto t0 = std::chrono::steady_clock::now();
-        bool ok = book.add_order(2, kTick, 100, true);
+        bool ok = book.add_order(2, kTick, 100, true).accepted;
         const auto t1 = std::chrono::steady_clock::now();
         benchmark::DoNotOptimize(ok);
         state.SetIterationTime(elapsed_seconds(t0, t1));
@@ -140,7 +140,7 @@ static void BM_Compare_NanoMatch_MixedAdd(benchmark::State &state)
         const std::uint32_t tick = kTick + static_cast<std::uint32_t>(id % 200);
         const std::uint32_t vol = static_cast<std::uint32_t>((id % 500) + 1);
         const auto t0 = std::chrono::steady_clock::now();
-        bool ok = book->add_order(id, tick, vol, is_buy);
+        bool ok = book->add_order(id, tick, vol, is_buy).accepted;
         const auto t1 = std::chrono::steady_clock::now();
         benchmark::DoNotOptimize(ok);
         state.SetIterationTime(elapsed_seconds(t0, t1));
@@ -165,7 +165,7 @@ static void BM_MultiLevelSweep(benchmark::State &state)
         book.add_order(5, kTick + 4, kVol, false);
         state.ResumeTiming();
         const auto t0 = std::chrono::steady_clock::now();
-        bool ok = book.add_order(6, kTick + kLevels - 1, kVol * kLevels, true);
+        bool ok = book.add_order(6, kTick + kLevels - 1, kVol * kLevels, true).accepted;
         const auto t1 = std::chrono::steady_clock::now();
         benchmark::DoNotOptimize(ok);
         state.SetIterationTime(elapsed_seconds(t0, t1));
@@ -196,7 +196,7 @@ static void BM_MatchThroughTombstones(benchmark::State &state)
         }
         state.ResumeTiming();
         const auto t0 = std::chrono::steady_clock::now();
-        bool ok = book.add_order(kTakerId, kTombstoneTick, 10, true);
+        bool ok = book.add_order(kTakerId, kTombstoneTick, 10, true).accepted;
         const auto t1 = std::chrono::steady_clock::now();
         benchmark::DoNotOptimize(ok);
         state.SetIterationTime(elapsed_seconds(t0, t1));

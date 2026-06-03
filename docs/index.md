@@ -40,3 +40,4 @@ Release flags: `-O3 -march=native -DNDEBUG`. All builds: `-Wall -Wextra -Werror`
 | [Repository](files.md) | Source layout |
 | [Build and test](build-and-test.md) | Targets, CI, test matrix |
 | [Benchmarks](benchmarks.md) | Microbenchmark definitions |
+| [Known issues](known-issues.md) | Issue ledger |

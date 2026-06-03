@@ -19,7 +19,6 @@ Independent pool per side. Dense `Order` storage with O(1) allocate and dealloca
 | `orders_` | `Order` array |
 | `free_` | Stack of free indices |
 | `generations_` | Per-slot counter; initial value 1 |
-| `arena_`, `memory_` | PMR monotonic buffer |
 
 Construction fills `free_` with indices `capacity-1 .. 0`.
 
@@ -52,10 +51,6 @@ Prevents stale FIFO entries from addressing a slot reused after cancel or fill.
 
 `order_pool_capacity` bounds resting orders per side. Pool index and `order_id` are independent; locators map `order_id` → `{ index, generation, side, active }`.
 
-## Arena size
+## Allocation
 
-```text
-capacity × (sizeof(Order) + sizeof(PoolIndex) + sizeof(uint32_t)) + padding
-```
-
-Overflow checked at construction.
+Construction validates capacity and allocates fixed-size vectors for orders, free indices, and generations.

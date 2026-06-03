@@ -6,6 +6,19 @@ namespace raijin
 {
     using PoolIndex = std::uint32_t;
 
+    enum class OrderType : std::uint8_t
+    {
+        Limit = 0,
+        Market = 1
+    };
+
+    enum class TimeInForce : std::uint8_t
+    {
+        GTC = 0,
+        IOC = 1,
+        FOK = 2
+    };
+
     struct alignas(16) Order
     {
         std::uint64_t order_id;

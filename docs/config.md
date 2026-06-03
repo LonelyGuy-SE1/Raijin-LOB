@@ -73,4 +73,4 @@ RingBuffer<ExecutionReceipt> rb(65536);
 LimitOrderBook book(config, &rb);
 ```
 
-Size to peak fill burst between consumer drains. Undrained overflow drops receipts without affecting book state.
+Size to peak fill burst between consumer drains. Full ring silently drops receipts.

@@ -79,6 +79,8 @@ Each `PriceLevel` binds to `orders_ + tick × Q` at construction. Ring indices u
 
 ```text
 validate (volume, tick, order_id, duplicate active id)
+if Limit+GTC: inline fast path in header
+else: forward to add_order_slow (Market / IOC / FOK)
 match_buy | match_sell
   clean_front (skip invalid head; compact after 8 consecutive stale pops)
   fill FIFO head at best opposite price
@@ -86,6 +88,7 @@ match_buy | match_sell
   erase best price when level volume reaches zero
 rest_order if incoming volume > 0
   allocate pool slot, push OrderRef, update locator, set radar bit and best price
+return AddResult (matched/rested/dropped volumes)
 ```
 
 ## Invariants
