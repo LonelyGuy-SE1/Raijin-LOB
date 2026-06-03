@@ -52,7 +52,8 @@ namespace raijin
             return true;
         }
 
-        return rest_order(incoming, is_buy);
+        bool rested = rest_order(incoming, is_buy);
+        return rested || (incoming.volume < volume);
     }
 
     bool LimitOrderBook::cancel_order(std::uint64_t order_id) noexcept
@@ -159,14 +160,26 @@ namespace raijin
         return (price_level_count + 63) >> 6;
     }
 
-    void LimitOrderBook::set_bit(std::vector<std::uint64_t> &words, std::uint32_t tick) noexcept
+    void LimitOrderBook::set_bit(std::vector<std::uint64_t> &words, std::uint32_t tick, std::uint32_t &active_levels) noexcept
     {
-        words[tick >> 6] |= 1ULL << (tick & 63);
+        const std::size_t word = tick >> 6;
+        const std::uint64_t mask = 1ULL << (tick & 63);
+        if ((words[word] & mask) == 0)
+        {
+            words[word] |= mask;
+            ++active_levels;
+        }
     }
 
-    void LimitOrderBook::reset_bit(std::vector<std::uint64_t> &words, std::uint32_t tick) noexcept
+    void LimitOrderBook::reset_bit(std::vector<std::uint64_t> &words, std::uint32_t tick, std::uint32_t &active_levels) noexcept
     {
-        words[tick >> 6] &= ~(1ULL << (tick & 63));
+        const std::size_t word = tick >> 6;
+        const std::uint64_t mask = 1ULL << (tick & 63);
+        if ((words[word] & mask) != 0)
+        {
+            words[word] &= ~mask;
+            --active_levels;
+        }
     }
 
     bool LimitOrderBook::rest_order(const Order &order, bool is_buy) noexcept
@@ -206,7 +219,7 @@ namespace raijin
 
         if (is_buy)
         {
-            set_bit(bid_words_, order.price_tick);
+            set_bit(bid_words_, order.price_tick, bid_active_levels_);
 
             if (best_bid_ == invalid_tick || order.price_tick > best_bid_)
             {
@@ -215,7 +228,7 @@ namespace raijin
         }
         else
         {
-            set_bit(ask_words_, order.price_tick);
+            set_bit(ask_words_, order.price_tick, ask_active_levels_);
 
             if (best_ask_ == invalid_tick || order.price_tick < best_ask_)
             {
@@ -249,12 +262,14 @@ namespace raijin
             level.remove_volume(fill);
 
             if (receipt_queue_){
-                receipt_queue_->push({
+                if (!receipt_queue_->push({
                     .maker_order_id = resting.order_id,
                     .taker_order_id = incoming.order_id,
                     .price_tick = resting.price_tick,
                     .executed_volume = fill
-                });
+                })) {
+                    ++receipt_overflows_;
+                }
             }
 
             if (resting.volume == 0)
@@ -294,13 +309,15 @@ namespace raijin
             resting.volume -= fill;
             level.remove_volume(fill);
 
-            if(receipt_queue_){
-                receipt_queue_->push({
+            if (receipt_queue_){
+                if (!receipt_queue_->push({
                     .maker_order_id = resting.order_id,
                     .taker_order_id = incoming.order_id,
                     .price_tick = resting.price_tick,
                     .executed_volume = fill
-                });
+                })) {
+                    ++receipt_overflows_;
+                }
             }
             
             if (resting.volume == 0)
@@ -346,21 +363,21 @@ namespace raijin
 
     void LimitOrderBook::erase_best_ask(std::uint32_t tick) noexcept
     {
-        reset_bit(ask_words_, tick);
+        reset_bit(ask_words_, tick, ask_active_levels_);
 
         if (tick == best_ask_)
         {
-            best_ask_ = next_ask(tick);
+            best_ask_ = (ask_active_levels_ == 0) ? invalid_tick : next_ask(tick);
         }
     }
 
     void LimitOrderBook::erase_best_bid(std::uint32_t tick) noexcept
     {
-        reset_bit(bid_words_, tick);
+        reset_bit(bid_words_, tick, bid_active_levels_);
 
         if (tick == best_bid_)
         {
-            best_bid_ = tick == 0 ? invalid_tick : next_bid(tick - 1);
+            best_bid_ = (bid_active_levels_ == 0) ? invalid_tick : (tick == 0 ? invalid_tick : next_bid(tick - 1));
         }
     }
 

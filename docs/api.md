@@ -98,10 +98,10 @@ Returns `false` when pool is exhausted or level queue is full after compaction.
 | --- | --- |
 | Fully matched, nothing to rest | `true` |
 | Rest succeeds | `true` |
-| Match commits fills, rest fails | `false` (fills retained) |
+| Match commits fills, rest fails | `true` (fills retained, remainder dropped) |
 | Validation failure | `false` |
 
-Matching precedes rest. A `false` return after partial or full match does not roll back fills.
+Matching precedes rest. `add_order` returns `true` if any volume was matched or successfully rested. It only returns `false` if validation fails or a completely unmatched order fails to rest.
 
 ## `cancel_order`
 
@@ -126,6 +126,8 @@ O(1). Queue entry may remain as tombstone until match or compaction. When cancel
 ```cpp
 uint32_t best_bid_tick() const noexcept;
 uint32_t best_ask_tick() const noexcept;
+bool has_best_bid() const noexcept;
+bool has_best_ask() const noexcept;
 uint64_t bid_volume(uint32_t price_tick) const noexcept;
 uint64_t ask_volume(uint32_t price_tick) const noexcept;
 ```
@@ -134,12 +136,15 @@ uint64_t ask_volume(uint32_t price_tick) const noexcept;
 | --- | --- | --- |
 | `best_bid_tick` | `UINT32_MAX` | — |
 | `best_ask_tick` | `UINT32_MAX` | — |
+| `has_best_bid` | `false` | — |
+| `has_best_ask` | `false` | — |
 | `bid_volume` | — | `0` |
 | `ask_volume` | — | `0` |
 
 ## Receipt integration
 
-When `receipt_queue_` is non-null, each fill calls `push`. Return value is not checked; a full ring drops the receipt while the fill remains committed. Consumer must drain the ring via `pop`.
+When `receipt_queue_` is non-null, each fill calls `push`. If the ring is full, the receipt is dropped (fill remains committed) and an internal overflow counter is incremented. Consumer must drain the ring via `pop`.
+Total dropped receipts can be queried via `uint64_t receipt_overflows() const noexcept`.
 
 ## Thread safety
 
