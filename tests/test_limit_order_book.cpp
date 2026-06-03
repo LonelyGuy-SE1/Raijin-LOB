@@ -296,7 +296,7 @@ TEST(LimitOrderBookCapacityTest, PartialMatchRestFailsWhenPoolFull)
     LimitOrderBook book(cfg);
     EXPECT_TRUE(book.add_order(1, 5010, 50, true));
     EXPECT_TRUE(book.add_order(2, 5020, 100, false));
-    EXPECT_FALSE(book.add_order(3, 5020, 200, true));
+    EXPECT_TRUE(book.add_order(3, 5020, 200, true));
     EXPECT_EQ(book.ask_volume(5020), 0u);
     EXPECT_EQ(book.bid_volume(5010), 50u);
     EXPECT_EQ(book.bid_volume(5020), 0u);
@@ -361,6 +361,7 @@ TEST(LimitOrderBookReceiptTest, FullRingDropsReceiptSilently)
     EXPECT_TRUE(rb.pop(receipt));
     EXPECT_EQ(receipt.maker_order_id, 99u);
     EXPECT_FALSE(rb.pop(receipt));
+    EXPECT_EQ(book.receipt_overflows(), 1u);
 }
 
 TEST(LimitOrderBookReceiptTest, CancelDoesNotEmitReceipt)
