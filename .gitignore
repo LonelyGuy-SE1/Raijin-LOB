@@ -1,9 +1,12 @@
 .vscode/
 build/
-build-wsl/
+build-*/
 *.exe
 *.o
 *.obj
 .DS_Store
 Release/
-
+.cache/
+${APPDATA}/
+AGENTS.md
+AGENTS.md

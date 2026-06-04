@@ -47,7 +47,8 @@ nav_order: 9
 
 | Path | Description |
 | --- | --- |
-| `benchmarks/lob_microbenchmarks.cpp` | Google Benchmark suite |
+| `benchmarks/lob_microbenchmarks.cpp` | Micro + random-ID + replay benchmarks |
+| `benchmarks/lob_latency_histograms.cpp` | rdtsc-based cycle percentile histograms |
 
 ## CI
 
@@ -71,4 +72,11 @@ nav_order: 9
 | `core_objects` | Core object library |
 | `raijin_engine` | `src/main.cpp` |
 | `raijin_tests` | `tests/*.cpp` |
-| `raijin_benchmarks` | `benchmarks/*.cpp` |
+| `raijin_benchmarks` | `benchmarks/lob_microbenchmarks.cpp` |
+| `raijin_latency_histograms` | `benchmarks/lob_latency_histograms.cpp` |
+
+## CMake options
+
+| Option | Default | Values |
+| --- | --- | --- |
+| `RAIJIN_PGO_MODE` | `none` | `none`, `generate`, `use` |

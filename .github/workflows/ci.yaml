@@ -40,21 +40,12 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: 'recursive'
-  
+
       - name: Install depedencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential cmake clang-tidy clang-format
-  
-      #- name: Run Clang-Format Check
-      #  run: |
-      #    find src include tests -name "*.cpp" -o -name "*.hpp" | xargs clang-format --dry-run --Werror
 
-      #- name: Run Clang-Tidy (Linter)
-      #  run: |
-      #    # Run the linter on all our source files
-      #    clang-tidy src/core/*.cpp include/core/*.hpp -- -Iinclude -Ithird_party/json/include -std=c++20
-  
       - name: Configure CMake
         run: |
           mkdir build
@@ -71,7 +62,7 @@ jobs:
           cd build
           ctest --output-on-failure
 
-  run-benchmarks:
+  benchmarks:
     name: Performance Benchmarks
     runs-on: ubuntu-latest
     steps:
@@ -85,18 +76,150 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential cmake
 
+      - name: CPU info
+        run: |
+          echo "## CPU Context" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          lscpu >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
       - name: Configure and Build
         run: |
-          mkdir build
-          cd build
+          mkdir -p build && cd build
           cmake .. -DCMAKE_BUILD_TYPE=Release
-          make -j$(nproc) raijin_benchmarks
+          make -j$(nproc) raijin_benchmarks raijin_latency_histograms
 
-      - name: Run Benchmarks and Report to Summary
+      - name: Run Microbenchmarks
         run: |
           cd build
-          echo "## Raijin-LOB Performance Benchmarks" >> $GITHUB_STEP_SUMMARY
-          echo "### Microbench (Deterministic Data)" >> $GITHUB_STEP_SUMMARY
+          echo "## Microbenchmarks (ns, median of 3 runs)" >> $GITHUB_STEP_SUMMARY
           echo '```text' >> $GITHUB_STEP_SUMMARY
-          ./raijin_benchmarks >> $GITHUB_STEP_SUMMARY
+          ./raijin_benchmarks --benchmark_repetitions=3 --benchmark_min_time=0.3s >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Run Latency Histograms
+        run: |
+          cd build
+          echo "## Latency Histograms (CPU cycles, median of 3 runs)" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          ./raijin_latency_histograms --benchmark_counters_tabular=true --benchmark_repetitions=3 --benchmark_min_time=0.1s >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate JSON artifact
+        run: |
+          cd build
+          ./raijin_benchmarks --benchmark_format=json --benchmark_out=benchmark_results.json --benchmark_repetitions=3 --benchmark_min_time=0.3s
+
+      - name: Upload benchmark JSON
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: build/benchmark_results.json
+
+      - name: Binary sizes
+        run: |
+          cd build
+          echo "## Binary Sizes" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ls -lh raijin_engine raijin_benchmarks raijin_latency_histograms raijin_tests >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  perf-profile:
+    name: Hardware Profile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          submodules: 'recursive'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake linux-tools-generic || true
+
+      - name: CPU info
+        run: |
+          echo "## CPU Context" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          lscpu >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Configure and Build
+        run: |
+          mkdir -p build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          make -j$(nproc) raijin_latency_histograms raijin_benchmarks
+
+      - name: Binary sizes
+        run: |
+          cd build
+          echo "## Binary Sizes" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ls -lh raijin_engine raijin_benchmarks raijin_latency_histograms raijin_tests >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Perf stat (basic counters)
+        run: |
+          cd build
+          echo "## Hardware Counters — Basic" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          sudo perf stat -e cycles,instructions,cache-references,cache-misses,branch-misses,branch-instructions \
+            ./raijin_latency_histograms --benchmark_repetitions=1 --benchmark_min_time=0.1s >> $GITHUB_STEP_SUMMARY 2>&1 || echo "perf not available" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Perf stat (detailed — L1/L2/LLC/TLB)
+        run: |
+          cd build
+          echo "## Hardware Counters — Detailed (L1/L2/LLC/TLB)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          sudo perf stat -d \
+            ./raijin_latency_histograms --benchmark_repetitions=1 --benchmark_min_time=0.1s >> $GITHUB_STEP_SUMMARY 2>&1 || echo "perf not available" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Perf stat (random-ID add only)
+        run: |
+          cd build
+          echo "## Hardware Counters — Random-ID Add (BM_Hist_AddNoMatch only)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          sudo perf stat -e cycles,instructions,cache-references,cache-misses,branch-misses,L1-dcache-load-misses,L1-icache-load-misses,LLC-load-misses,dTLB-load-misses \
+            ./raijin_latency_histograms --benchmark_filter=BM_Hist_AddNoMatch --benchmark_repetitions=1 --benchmark_min_time=0.2s >> $GITHUB_STEP_SUMMARY 2>&1 || echo "perf not available" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Perf stat (match only)
+        run: |
+          cd build
+          echo "## Hardware Counters — Match (BM_Hist_MatchOneLevel only)" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          sudo perf stat -e cycles,instructions,cache-references,cache-misses,branch-misses,L1-dcache-load-misses,L1-icache-load-misses,LLC-load-misses,dTLB-load-misses \
+            ./raijin_latency_histograms --benchmark_filter=BM_Hist_MatchOneLevel --benchmark_repetitions=1 --benchmark_min_time=0.2s >> $GITHUB_STEP_SUMMARY 2>&1 || echo "perf not available" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+      - name: Perf record (flamegraph data)
+        run: |
+          cd build
+          echo "## Perf Record" >> $GITHUB_STEP_SUMMARY
+          echo "Generating flamegraph data (uploaded as artifact)..." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          sudo perf record --call-graph dwarf -o perf.data \
+            ./raijin_latency_histograms --benchmark_repetitions=1 --benchmark_min_time=0.1s || true
+          sudo perf script -i perf.data > perf_script.txt 2>&1 || true
+          gzip -c perf.data > perf_data.gz || true
+          echo "Flamegraph data ready." >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload perf data
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-data
+          path: |
+            build/perf_data.gz
+            build/perf_script.txt

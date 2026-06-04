@@ -6,10 +6,17 @@ nav_order: 11
 
 # Benchmarks
 
-Source: `benchmarks/lob_microbenchmarks.cpp`  
+Source: `benchmarks/lob_microbenchmarks.cpp`, `benchmarks/lob_latency_histograms.cpp`
 Framework: Google Benchmark
 
 CI job `run-benchmarks` executes the full suite and writes results to the Actions step summary.
+
+## Executables
+
+| Binary | Source | Purpose |
+| --- | --- | --- |
+| `raijin_benchmarks` | `lob_microbenchmarks.cpp` | Microbenchmarks + random-ID + replay |
+| `raijin_latency_histograms` | `lob_latency_histograms.cpp` | rdtsc-based cycle percentile histograms |
 
 ## Configurations
 
@@ -69,6 +76,10 @@ Order id reuse on hot paths avoids locator cold misses. Monotonic ids without re
 | `BM_Compare_NanoMatch_MixedAdd` | `add_order` | Rotating side, tick, volume |
 | `BM_MultiLevelSweep` | `add_order` (5-level match) | Five ask levels |
 | `BM_MatchThroughTombstones` | `add_order` (match) | 0/8/64/256 front tombstones |
+| `BM_RandomAdd` | `add_order` (random IDs) | Pre-generated uniform random IDs |
+| `BM_RandomCancel` | `cancel_order` (random IDs) | 50K prefilled; random cancel + re-add |
+| `BM_RandomMatch` | `add_order` (random IDs, match) | 50K prefilled; random taker against resting |
+| `BM_ReplaySynthetic` | 1M message replay | 70% add, 25% cancel, 5% match |
 
 ### Tombstone prefill
 
@@ -93,3 +104,78 @@ Requires live maker volume after cancel so `level.clear()` does not remove tombs
 ## Column selection
 
 For `manual_time` benchmarks, use the `Time` column (manual). The `CPU` column includes loop and harness overhead.
+
+## Random-ID benchmarks
+
+`BM_RandomAdd`, `BM_RandomCancel`, `BM_RandomMatch` expose cache locality effects that sequential-ID benchmarks hide.
+
+All IDs and ticks are pre-generated into vectors before the timed loop. No RNG in the hot path.
+
+| Distribution | IDs | Ticks |
+| --- | --- | --- |
+| Uniform random | `uniform_int_distribution(1, max_order_id)` | `uniform_int_distribution(0, price_level_count-1)` |
+
+### Why this matters
+
+The locator table (`max_order_id + 1` entries) often exceeds L2 cache. Sequential IDs (1, 2, 3...) keep the working set hot. Random IDs force L2/L3 misses, revealing the true cost of locator lookups in production-like workloads.
+
+## Replay benchmark
+
+`BM_ReplaySynthetic` runs 1M messages with realistic operation mix:
+
+| Operation | Fraction | Behavior |
+| --- | --- | --- |
+| Add | 70% | Rest order at random tick |
+| Cancel | 25% | Cancel most recently added |
+| Match | 5% | Cross-book taker order |
+
+Each iteration creates a fresh book and runs the full 1M message sequence. Reports wall-clock time for the entire sequence.
+
+## Latency histograms
+
+`raijin_latency_histograms` measures per-operation cycle distributions using `rdtsc`/`rdtscp` with `lfence` serialization.
+
+Reported percentiles (all in CPU cycles):
+
+| Counter | Meaning |
+| --- | --- |
+| `p50` | Median latency |
+| `p90` | 90th percentile |
+| `p99` | 99th percentile (tail) |
+| `p999` | 99.9th percentile (severe tail) |
+| `min` | Best-case |
+| `max` | Worst-case |
+
+### Benchmarks instrumented
+
+| Benchmark | What it measures |
+| --- | --- |
+| `BM_Hist_AddNoMatch` | Add-only with random IDs |
+| `BM_Hist_Cancel` | Cancel with random IDs |
+| `BM_Hist_MatchOneLevel` | Single-level fill (sequential) |
+| `BM_Hist_MatchWithReceipts` | Fill + ring push (sequential) |
+| `BM_Hist_TombstoneMatch` | Match through 256 tombstones |
+
+## Compiler optimizations
+
+### LTO (Link-Time Optimization)
+
+Enabled by default in Release builds via `CheckIPOSupported`. Cross-TU inlining, dead code elimination, constant propagation across translation units.
+
+### PGO (Profile-Guided Optimization)
+
+Build with PGO:
+
+```bash
+# Step 1: Instrument
+cmake .. -DCMAKE_BUILD_TYPE=Release -DRAIJIN_PGO_MODE=generate
+make -j$(nproc)
+./raijin_benchmarks --benchmark_min_time=0.3s   # collect profile
+./raijin_latency_histograms --benchmark_min_time=0.1s
+
+# Step 2: Rebuild with profile
+cmake .. -DCMAKE_BUILD_TYPE=Release -DRAIJIN_PGO_MODE=use
+make -j$(nproc)
+```
+
+Profile data (`.gcda` files) must exist for `core_objects` before the `use` step. Run representative benchmarks in the `generate` step to collect profile data.
