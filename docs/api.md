@@ -68,7 +68,7 @@ One receipt per fill. Maker = resting order; taker = aggressive order.
 | `accepted` | `bool` | Any volume matched or rested |
 | `matched_volume` | `uint32_t` | Total volume matched |
 | `rested_volume` | `uint32_t` | Volume successfully rested |
-| `dropped_volume` | `uint32_t_t` | Unmatched remainder that failed to rest |
+| `dropped_volume` | `uint32_t` | Unmatched remainder that failed to rest |
 
 ## `add_order`
 
@@ -163,12 +163,12 @@ uint64_t ask_volume(uint32_t price_tick) const noexcept;
 
 | Function | Empty side | Out-of-range tick |
 | --- | --- | --- |
-| `best_bid_tick` | `UINT32_MAX` | — |
-| `best_ask_tick` | `UINT32_MAX` | — |
-| `has_best_bid` | `false` | — |
-| `has_best_ask` | `false` | — |
-| `bid_volume` | — | `0` |
-| `ask_volume` | — | `0` |
+| `best_bid_tick` | `UINT32_MAX` | - |
+| `best_ask_tick` | `UINT32_MAX` | - |
+| `has_best_bid` | `false` | - |
+| `has_best_ask` | `false` | - |
+| `bid_volume` | - | `0` |
+| `ask_volume` | - | `0` |
 
 ## Receipt integration
 

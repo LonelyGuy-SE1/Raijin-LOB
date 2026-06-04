@@ -9,7 +9,7 @@ nav_order: 11
 Source: `benchmarks/lob_microbenchmarks.cpp`, `benchmarks/lob_latency_histograms.cpp`
 Framework: Google Benchmark
 
-CI job `run-benchmarks` executes the full suite and writes results to the Actions step summary.
+CI jobs `benchmarks` and `perf-profile` execute the full suite and write results to the Actions step summary.
 
 ## Executables
 

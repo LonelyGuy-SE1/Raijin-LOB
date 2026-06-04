@@ -35,6 +35,7 @@ make -j$(nproc)
 | Engine | `./raijin_engine` |
 | Tests | `./raijin_tests` or `ctest --output-on-failure` |
 | Benchmarks | `./raijin_benchmarks` |
+| Latency histograms | `./raijin_latency_histograms` |
 
 `raijin_engine` loads `config/settings.json` by relative path; run from repository root.
 
@@ -47,13 +48,14 @@ Triggers on changes to `src/`, `include/`, `tests/`, `benchmarks/`, `CMakeLists.
 | Job | Steps |
 | --- | --- |
 | `build-and-test` | Checkout, Release build, `ctest --output-on-failure` |
-| `run-benchmarks` | Build `raijin_benchmarks`, append output to Actions summary |
+| `benchmarks` | Build both benchmark binaries, run with repetitions=3, JSON artifact |
+| `perf-profile` | Build, perf stat (basic + detailed + filtered), perf record |
 
 Submodules: `git submodule update --init --recursive`
 
 ## Test matrix
 
-57 cases across four files.
+76 tests across four files.
 
 ### `test_limit_order_book.cpp`
 
@@ -67,7 +69,7 @@ Submodules: `git submodule update --init --recursive`
 | ID reuse | After cancel, after fill |
 | Best price | Gap refresh, bid and ask |
 | Capacity | Pool exhaustion, queue full, match-then-rest failure |
-| Receipts | Full fill, partial, multi-level, ring full (Drop), Spin policy, cancel |
+| Receipts | Full fill, partial, multi-level, ring full (silent drop), cancel |
 | AddResult | Partial rest failure reports dropped volume |
 
 Fixture default: `price_level_count=100000`, `level_queue_capacity=256`, `max_order_id=1000`.
