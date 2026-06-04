@@ -8,6 +8,14 @@ permalink: /
 
 # Raijin
 
+<p align="center">
+  <img src="https://img.shields.io/badge/C%2B%2B-20-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" />
+  <img src="https://img.shields.io/badge/Linux-GCC%20%7C%20Clang-fcc624?style=for-the-badge&logo=linux&logoColor=white" />
+  <img src="https://img.shields.io/badge/License-GPLv3-22c55e?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/CI-GitHub%20Actions-2088ff?style=for-the-badge&logo=githubactions&logoColor=white" />
+  <img src="https://img.shields.io/badge/Docs-GitHub%20Pages-4a90d9?style=for-the-badge&logo=githubpages&logoColor=white" />
+</p>
+
 C++20 limit order book with config-owned dimensions, generational order pools, per-tick FIFO queues, and optional SPSC execution receipts.
 
 ## Quick start

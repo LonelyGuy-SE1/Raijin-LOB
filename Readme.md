@@ -1,6 +1,27 @@
-# Project Raijin-LOB
+<p align="center">
+<pre>
+ ██████╗ ██╗██╗     ███████╗██╗ ██████╗
+██╔═══██╗██║██║     ██╔════╝██║██╔════╝
+██║   ██║██║██║     █████╗  ██║██║  ███╗
+██║   ██║██║██║     ██╔══╝  ██║██║   ██║
+╚██████╔╝██║███████╗██║     ██║╚██████╔╝
+ ╚═════╝ ╚═╝╚══════╝╚═╝     ╚═╝ ╚═════╝
+</pre>
+</p>
 
-**Task-Aligned Latent Inference of Regime-Dependent Liquidity Manifolds**
+<p align="center">
+  <img src="https://img.shields.io/badge/C%2B%2B-20-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" />
+  <img src="https://img.shields.io/badge/Linux-GCC%20%7C%20Clang-fcc624?style=for-the-badge&logo=linux&logoColor=white" />
+  <img src="https://img.shields.io/badge/License-GPLv3-22c55e?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/CI-GitHub%20Actions-2088ff?style=for-the-badge&logo=githubactions&logoColor=white" />
+  <img src="https://img.shields.io/badge/Docs-GitHub%20Pages-4a90d9?style=for-the-badge&logo=githubpages&logoColor=white" />
+</p>
+
+<p align="center">
+  <strong>Production-grade limit order book core feeding a JEPA world model for market microstructure.</strong>
+</p>
+
+---
 
 Project Raijin-LOB aims to provide a high-fidelity latent representation of limit order book dynamics under structured interventional evaluations. Operating as a task-aligned latent inference engine, it hybridizes a bare-metal, cache-aligned C++ microstructure simulator driven by multivariate Hawkes processes and held-out families of strategically adaptive agent policies with a regime-conditioned Joint-Embedding Predictive Architecture.
 
@@ -8,9 +29,9 @@ To reduce entanglement between macro-state and transient microstructure, the mod
 
 Rather than relying on direct autoregressive tick prediction, the architecture learns task-aligned latent transitions to support structured interventions, evaluating parameterized meta-orders in terms of impact response, fill probability, and adverse selection. To aggressively mitigate simulator-induced leakage, training and evaluation are strictly separated across out-of-distribution (OOD) agent policy classes and perturbed market regimes, with performance reported as statistically significant improvements over queue-reactive baselines.
 
-Technical documentation:
+> [Technical documentation](https://lonelyguy-se1.github.io/Raijin-LOB/)
 
-> [docs site](https://lonelyguy-se1.github.io/Raijin-LOB/) (source in `docs/`)
+> [Benchmarks and perf data](https://lonelyguy-se1.github.io/Raijin-LOB/benchmarks.html)
 
 ## Phase 1 Benchmark Results
 
@@ -43,10 +64,6 @@ Latency histograms (CPU cycles):
 | MatchWithReceipts | 78 | 78 | 104 |
 | TombstoneMatch/256 | 884 | 910 | 910 |
 
-See CI job summaries for full benchmark output with statistical detail.
-
-> [Benchmarks and perf data](https://lonelyguy-se1.github.io/Raijin-LOB/benchmarks.html)
-
 ## License
 
-This project is licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE) for details.
+Licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE) for details.
