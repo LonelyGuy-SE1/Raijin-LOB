@@ -1,25 +1,29 @@
-<p align="center">
-<pre>
- ██████╗ ██╗██╗     ███████╗██╗ ██████╗
-██╔═══██╗██║██║     ██╔════╝██║██╔════╝
-██║   ██║██║██║     █████╗  ██║██║  ███╗
-██║   ██║██║██║     ██╔══╝  ██║██║   ██║
-╚██████╔╝██║███████╗██║     ██║╚██████╔╝
- ╚═════╝ ╚═╝╚══════╝╚═╝     ╚═╝ ╚═════╝
-</pre>
-</p>
+<div align="center">
 
-<p align="center">
-  <img src="https://img.shields.io/badge/C%2B%2B-20-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" />
-  <img src="https://img.shields.io/badge/Linux-GCC%20%7C%20Clang-fcc624?style=for-the-badge&logo=linux&logoColor=white" />
+```
+██████╗  █████╗ ██████╗ ██╗  ██╗██╗     ██████╗ ███████╗
+██╔══██╗██╔══██╗██╔══██╗██║ ██╔╝██║     ██╔═══██╗██╔════╝
+██████╔╝██║  ██║██║  ██║█████╔╝ ██║     ██║   ██║███████╗
+██╔══██╗██║  ██║██║  ██║██╔═██╗ ██║     ██║   ██║╚════██║
+██║  ██║╚█████╔╝██████╔╝██║  ██╗███████╗╚██████╔╝███████║
+╚═╝  ╚═╝ ╚════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝ ╚═════╝ ╚══════╝
+```
+
+<a href="https://github.com/LonelyGuy-SE1/Raijin-LOB/blob/main/LICENSE">
   <img src="https://img.shields.io/badge/License-GPLv3-22c55e?style=for-the-badge" />
-  <img src="https://img.shields.io/badge/CI-GitHub%20Actions-2088ff?style=for-the-badge&logo=githubactions&logoColor=white" />
-  <img src="https://img.shields.io/badge/Docs-GitHub%20Pages-4a90d9?style=for-the-badge&logo=githubpages&logoColor=white" />
-</p>
+</a>
+<a href="https://lonelyguy-se1.github.io/Raijin-LOB/">
+  <img src="https://img.shields.io/badge/Docs-Reference-4a90d9?style=for-the-badge&logo=githubpages&logoColor=white" />
+</a>
+<a href="https://github.com/LonelyGuy-SE1/Raijin-LOB/actions">
+  <img src="https://img.shields.io/badge/CI-Passing-2088ff?style=for-the-badge&logo=githubactions&logoColor=white" />
+</a>
+<img src="https://img.shields.io/badge/C%2B%2B-20-00599C?style=for-the-badge&logo=cplusplus&logoColor=white" />
+<img src="https://img.shields.io/badge/Linux-GCC%20%7C%20Clang-fcc624?style=for-the-badge&logo=linux&logoColor=white" />
 
-<p align="center">
-  <strong>Production-grade limit order book core feeding a JEPA world model for market microstructure.</strong>
-</p>
+**Production-grade limit order book core feeding a JEPA world model for market microstructure.**
+
+</div>
 
 ---
 
@@ -28,10 +32,6 @@ Project Raijin-LOB aims to provide a high-fidelity latent representation of limi
 To reduce entanglement between macro-state and transient microstructure, the model factorizes the latent space into regime and micro components, enforcing regime-invariance on the micro-state via Variance-Invariance-Covariance Regularization (VICReg) with controlled weighting, while encouraging separation through strict orthogonality constraints. Discontinuities are explicitly mapped via event-centric batching and contrastive boundary objectives defined around detected liquidity cliffs (e.g., thresholded spread expansions and queue depletion rates).
 
 Rather than relying on direct autoregressive tick prediction, the architecture learns task-aligned latent transitions to support structured interventions, evaluating parameterized meta-orders in terms of impact response, fill probability, and adverse selection. To aggressively mitigate simulator-induced leakage, training and evaluation are strictly separated across out-of-distribution (OOD) agent policy classes and perturbed market regimes, with performance reported as statistically significant improvements over queue-reactive baselines.
-
-> [Technical documentation](https://lonelyguy-se1.github.io/Raijin-LOB/)
-
-> [Benchmarks and perf data](https://lonelyguy-se1.github.io/Raijin-LOB/benchmarks.html)
 
 ## Phase 1 Benchmark Results
 
@@ -66,4 +66,4 @@ Latency histograms (CPU cycles):
 
 ## License
 
-Licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE) for details.
+Licensed under the [GNU General Public License v3.0](https://github.com/LonelyGuy-SE1/Raijin-LOB/blob/main/LICENSE).
