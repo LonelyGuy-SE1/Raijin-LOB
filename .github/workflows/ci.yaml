@@ -124,7 +124,7 @@ jobs:
           cd build
           echo "## Binary Sizes" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          ls -lh raijin_engine raijin_benchmarks raijin_latency_histograms raijin_tests >> $GITHUB_STEP_SUMMARY
+          ls -lh raijin_benchmarks raijin_latency_histograms >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
   perf-profile:
@@ -160,7 +160,7 @@ jobs:
           cd build
           echo "## Binary Sizes" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-          ls -lh raijin_engine raijin_benchmarks raijin_latency_histograms raijin_tests >> $GITHUB_STEP_SUMMARY
+          ls -lh raijin_benchmarks raijin_latency_histograms >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
