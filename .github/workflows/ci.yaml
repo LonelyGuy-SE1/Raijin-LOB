@@ -114,7 +114,7 @@ jobs:
           ./raijin_benchmarks --benchmark_format=json --benchmark_out=benchmark_results.json --benchmark_repetitions=3 --benchmark_min_time=0.3s
 
       - name: Upload benchmark JSON
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: benchmark-results
           path: build/benchmark_results.json
@@ -217,7 +217,7 @@ jobs:
           echo "Flamegraph data ready." >> $GITHUB_STEP_SUMMARY
 
       - name: Upload perf data
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: perf-data
           path: |
