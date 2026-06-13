@@ -15,7 +15,7 @@
 ![C++20](https://img.shields.io/badge/C%2B%2B-20-00599C?style=for-the-badge&logo=cplusplus&logoColor=white)
 ![Linux](https://img.shields.io/badge/Linux-GCC%20%7C%20Clang-fcc624?style=for-the-badge&logo=linux&logoColor=black)
 
-**Production-grade limit order book core feeding a JEPA world model for market microstructure.**
+**Highly efficient limit order book core feeding a JEPA world model for market microstructure.**
 
 </div>
 
@@ -57,6 +57,15 @@ Latency histograms (CPU cycles):
 | MatchOneLevel           | 78  | 78  | 78  |
 | MatchWithReceipts       | 78  | 78  | 104 |
 | TombstoneMatch/256      | 884 | 910 | 910 |
+
+Check the actions summary for more detailed benchmark results and other related information. 
+
+
+Phase 1 included the V0.1.0 of the core LOB (Sample data gateway implementation will be done once the Hawkes simulator is built.)
+
+Phase 2 (Current phase) will include the Hawkes simulator. (This will be built as a standalone simulator to model real market order book dynamics. and the lob will be modified/updated based on the benchmark performance using this.)
+
+Phase 3 will include the agentic part of the project.
 
 ## License
 
